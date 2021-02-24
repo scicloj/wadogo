@@ -52,13 +52,13 @@
 
 (defn- base->forward-inverse
   [^double base ^double C]
-  (case base 
-    10.0 [forward-10 inverse-10]
-    m/E [forward-e inverse-e]
-    2.0 [forward-2 inverse-2]
-    1.0 [identity identity]
-    [(make-forward base C)
-     (make-inverse base C)]))
+  (cond
+    (= base 10.0) [forward-10 inverse-10]
+    (= base m/E) [forward-e inverse-e]
+    (= base 2.0) [forward-2 inverse-2]
+    (m/one? base) [identity identity]
+    :else [(make-forward base C)
+           (make-inverse base C)]))
 
 (defmethod scale :symlog
   ([_] (scale :symlog {}))
