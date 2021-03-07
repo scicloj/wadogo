@@ -1,6 +1,7 @@
 (ns wadogo.scale.log
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale reify-scale deep-merge]]))
+            [wadogo.common :refer [scale ->ScaleType]]
+            [wadogo.utils :refer [strip-keys]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -26,14 +27,13 @@
 (defmethod scale :log
   ([_] (scale :log {}))
   ([_ params]
-   (let [params (deep-merge log-params params)
+   (let [params (merge log-params params)
          [^double dstart ^double dend] (:domain params)
          [rstart rend] (:range params)
          n? (neg? dstart)
          ls (m/log (if n? (- dstart) dstart))
          le (m/log (if n? (- dend) dend))]
-     (reify-scale 
-      (log-forward n? (m/make-norm ls le rstart rend))
-      (log-inverse n? (m/make-norm rstart rend ls le))
-      (assoc params :kind :log)))))
-
+     (->ScaleType :log (:domain params) (:range params)
+                  (log-forward n? (m/make-norm ls le rstart rend))
+                  (log-inverse n? (m/make-norm rstart rend ls le))
+                  (strip-keys params)))))

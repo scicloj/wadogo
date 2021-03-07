@@ -19,7 +19,8 @@
   Padding is calculated the same way as in `d3`. It's a proportion of the step."
   (:require [fastmath.core :as m]
 
-            [wadogo.common :refer [scale reify-scale deep-merge]]))
+            [wadogo.common :refer [scale ->ScaleType]]
+            [wadogo.utils :refer [strip-keys]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -44,7 +45,7 @@
 (defmethod scale :bands
   ([_] (scale :bands {}))
   ([_ params]
-   (let [params (deep-merge bands-params params)
+   (let [params (merge bands-params params)
 
          [^double rstart ^double rend] (:range params)
          rdiff (- rend rstart)
@@ -73,11 +74,9 @@
                 :end (norm lend)
                 :point (norm (m/lerp lstart lend align))})]
      
-     (reify-scale
-      (zipmap bands lst)
-      (bands-inverse-fn  bands lst)
-      (assoc params
-             :domain bands
-             :kind :bands
-             :bandwidth (* rdiff (m/abs size))
-             :step (* rdiff (m/abs step)))))))
+     (->ScaleType :bands bands (:range params)
+                  (zipmap bands lst)
+                  (bands-inverse-fn  bands lst)
+                  (assoc (strip-keys params)
+                         :bandwidth (* rdiff (m/abs size))
+                         :step (* rdiff (m/abs step)))))))

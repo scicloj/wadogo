@@ -2,7 +2,8 @@
 
 (ns wadogo.scale.symlog
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale reify-scale deep-merge]]))
+            [wadogo.common :refer [scale ->ScaleType]]
+            [wadogo.utils :refer [strip-keys]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -53,9 +54,9 @@
 (defn- base->forward-inverse
   [^double base ^double C]
   (cond
-    (= base 10.0) [forward-10 inverse-10]
-    (= base m/E) [forward-e inverse-e]
-    (= base 2.0) [forward-2 inverse-2]
+    (== base 10.0) [forward-10 inverse-10]
+    (== base m/E) [forward-e inverse-e]
+    (== base 2.0) [forward-2 inverse-2]
     (m/one? base) [identity identity]
     :else [(make-forward base C)
            (make-inverse base C)]))
@@ -63,7 +64,7 @@
 (defmethod scale :symlog
   ([_] (scale :symlog {}))
   ([_ params]
-   (let [params (deep-merge symlog-params params)
+   (let [params (merge symlog-params params)
          base (:base params)
          C (get params :C (/ (m/ln base)))
          [forward inverse] (base->forward-inverse base C)
@@ -71,7 +72,7 @@
          [rstart rend] (:range params)
          sls (forward dstart)
          sle (forward dend)]
-     (reify-scale 
-      (symlog-forward forward (m/make-norm sls sle rstart rend))
-      (symlog-inverse inverse (m/make-norm rstart rend sls sle))
-      (assoc params :kind :symlog :C C)))))
+     (->ScaleType :symlog (:domain params) (:range params)
+                  (symlog-forward forward (m/make-norm sls sle rstart rend))
+                  (symlog-inverse inverse (m/make-norm rstart rend sls sle))
+                  (assoc (strip-keys params) :C C)))))

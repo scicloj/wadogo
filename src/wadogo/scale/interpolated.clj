@@ -1,13 +1,18 @@
 (ns wadogo.scale.interpolated
   (:require [fastmath.interpolation :refer [interpolators-1d-list]]
             
-            [wadogo.common :refer [scale reify-scale]]))
+            [wadogo.common :refer [scale ->ScaleType]]
+            [wadogo.utils :refer [strip-keys]]))
 
+(def ^:private interpolators
+  {:cubic :cubic-spline
+   :kriging :kriging-spline
+   :linear :linear-smile})
 
 (def ^:private interpolated-params
-  {:domain [0.0 1.0]
-   :range [0.0 1.0]
-   :interpolator :linear-smile
+  {:domain [0.0 0.5 1.0]
+   :range [0.0 0.5 1.0]
+   :interpolator :linear
    :interpolator-params nil})
 
 (defmethod scale :interpolated
@@ -15,15 +20,15 @@
   ([_ params]
    (let [params (merge interpolated-params params)
          pairs (map vector (:domain params) (:range params))
-         interpolator (apply partial (interpolators-1d-list (:interpolator params)) (:interpolator-params nil))
+         interpolator-key (get interpolators (:interpolator params) (:interpolator params))
+         interpolator (apply partial (interpolators-1d-list interpolator-key) (:interpolator-params interpolated-params))
          fpairs (sort-by first pairs)
          forward (interpolator (map first fpairs)
                                (map second fpairs))
          ipairs (sort-by second pairs)
          inverse (interpolator (map second ipairs)
                                (map first ipairs))]
-     (reify-scale
-      forward
-      inverse
-      (assoc params :kind :interpolated)))))
-
+     (->ScaleType :interpolated (:domain params) (:range params)
+                  forward
+                  inverse
+                  (strip-keys params)))))

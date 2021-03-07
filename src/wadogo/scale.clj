@@ -1,58 +1,43 @@
 (ns wadogo.scale
   (:refer-clojure :exclude [range])
   (:require [wadogo.common :as common]
-            [wadogo.protocols :as proto]
-            
+
             [wadogo.scale.linear]
             [wadogo.scale.interpolated]
             [wadogo.scale.log]
             [wadogo.scale.symlog]
             [wadogo.scale.bands]
             [wadogo.scale.ordinal]
-            [wadogo.scale.quantile]))
+            [wadogo.scale.quantile])
+  (:import [wadogo.common ScaleType]))
+
+(set! *warn-on-reflection* true)
 
 (defn scale
   ([scale-kind] (common/scale scale-kind))
   ([scale-kind attributes] (common/scale scale-kind attributes)))
 
-(defn forward
-  [scale v]
-  (proto/forward scale v))
-
-(defn inverse
-  [scale v]
-  (proto/inverse scale v))
-
-(defn domain
-  [scale]
-  (proto/domain scale))
-
-(defn range
-  [scale]
-  (proto/range scale))
+(defn forward [scale v] (scale v))
+(defn inverse [^ScaleType scale v] ((.inverse-fn scale) v))
+(defn domain  [^ScaleType scale] (.domain scale))
+(defn range [^ScaleType scale] (.range scale))
+(defn kind [^ScaleType scale] (.kind scale))
 
 (defn data
-  ([scale]
-   (proto/data scale))
-  ([scale key]
-   (get (proto/data scale) key)))
+  ([^ScaleType scale]
+   (.data scale))
+  ([^ScaleType scale key]
+   (get (.data scale) key)))
 
-(defn kind
-  [scale]
-  (data scale :kind))
-
-(defn set-domain
-  [scale domain]
-  (proto/set-domain scale domain))
-
-(defn set-range
-  [scale range]
-  (proto/set-range scale range))
-
-(defn set-data
-  [scale attribute v]
-  (proto/set-data scale attribute v))
-
+(defn with-domain [^ScaleType scale domain]
+  (common/scale (.kind scale) (assoc (common/scale->map scale) :domain domain)) )
+(defn with-range [^ScaleType scale range]
+  (common/scale (.kind scale) (assoc (common/scale->map scale) :range range)) )
+(defn with-data
+  ([^ScaleType scale data]
+   (common/scale (.kind scale) (merge (common/scale->map scale) data)))
+  ([^ScaleType scale k v]
+   (common/scale (.kind scale) (assoc (common/scale->map scale) k v))))
 
 
 (comment
@@ -80,9 +65,9 @@
   (range my-scale) ;; => [100 200]
   (kind my-scale)
 
-  (set-domain my-scale [200 300])
+  (with-domain my-scale [200 300])
   ;; => #object[wadogo.core$reify_scale$reify__25948 0x44620b "[200 300] -> [100 200] {:kind :linear}"]
-  (set-range my-scale [-10 -20])
+  (with-range my-scale [-10 -20])
   ;; => #object[wadogo.core$reify_scale$reify__25948 0x4519228c "[-1 2] -> [-10 -20] {:kind :linear}"]
 
   )

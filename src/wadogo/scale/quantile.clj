@@ -1,7 +1,8 @@
 (ns wadogo.scale.quantile
   (:require [fastmath.core :as m]
             [fastmath.stats :as stats]
-            [wadogo.common :refer [scale reify-scale deep-merge interval-steps-before]]))
+            [wadogo.common :refer [scale ->ScaleType]]
+            [wadogo.utils :refer [interval-steps-before strip-keys]]))
 
 (def ^:private quantile-params
   {:quantiles 10
@@ -11,7 +12,7 @@
 (defmethod scale :quantile
   ([_] (scale :quantile {}))
   ([_ params]
-   (let [params (deep-merge quantile-params params)
+   (let [params (merge quantile-params params)
          xs (m/seq->double-array (:domain params))
          quantiles (:quantiles params)
          align (m/constrain ^double (:align params) 0.0 1.0)
@@ -28,15 +29,15 @@
                     :id id
                     :quantile q}) (range) (partition 2 1 steps-corr) quantiles)
          forward (comp r (interval-steps-before steps))]
-     (reify-scale
-      (fn [^double v]
-        (when (<= start v end)
-          (forward v)))
-      (constantly nil)
-      (assoc params :domain xs :range [start end] :kind :quantile :quantiles quantiles)))))
+     (->ScaleType :quantile xs [start end]
+                  (fn [^double v]
+                    (when (<= start v end)
+                      (forward v)))
+                  (constantly nil)
+                  (assoc (strip-keys params) :quantiles quantiles)))))
 
 #_((scale :quantile {:domain d
-                     :attributes {:quantiles [0.25 0.5 0.75 1]}}) 7.9)
+                     :quantiles [0.25 0.5 0.75 1]}) 7.9)
 
 #_(def d
     [5.1
