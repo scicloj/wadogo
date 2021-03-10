@@ -7,7 +7,8 @@
   (toString [_]
     (str (name kind) ": " domain " -> " range (when data (str " " data))))
   IFn
-  (invoke [_ v] (forward-fn v)))
+  (invoke [_ v] (forward-fn v))
+  (invoke [_ v interval?] (forward-fn v interval?)))
 
 (defn scale->map
   [^ScaleType scale]

@@ -30,14 +30,18 @@
                     :quantile q}) (range) (partition 2 1 steps-corr) quantiles)
          forward (comp r (interval-steps-before steps))]
      (->ScaleType :quantile xs [start end]
-                  (fn [^double v]
-                    (when (<= start v end)
-                      (forward v)))
-                  (constantly nil)
+                  (fn local-forward
+                    ([^double v interval?]
+                     (let [res (when (<= start v end)
+                                 (forward v))]
+                       (if interval? res (:quantile res))))
+                    ([^double v] (local-forward v false)))
+                  (into {} (map (fn [{:keys [quantile start end]}]
+                                  [quantile [start end]] ) r))
                   (assoc (strip-keys params) :quantiles quantiles)))))
 
-#_((scale :quantile {:domain d
-                     :quantiles [0.25 0.5 0.75 1]}) 7.9)
+#_(.inverse-fn (scale :quantile {:domain d
+                                 :quantiles [0.25 0.5 0.75 1]}))
 
 #_(def d
     [5.1

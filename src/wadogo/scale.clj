@@ -1,6 +1,7 @@
 (ns wadogo.scale
   (:refer-clojure :exclude [range])
-  (:require [wadogo.common :as common]
+  (:require [java-time :refer [duration]]
+            [wadogo.common :as common]
 
             [wadogo.scale.linear]
             [wadogo.scale.interpolated]
@@ -8,7 +9,8 @@
             [wadogo.scale.symlog]
             [wadogo.scale.bands]
             [wadogo.scale.ordinal]
-            [wadogo.scale.quantile])
+            [wadogo.scale.quantile]
+            [wadogo.scale.datetime])
   (:import [wadogo.common ScaleType]))
 
 (set! *warn-on-reflection* true)
@@ -39,6 +41,36 @@
   ([^ScaleType scale k v]
    (common/scale (.kind scale) (assoc (common/scale->map scale) k v))))
 
+(def ^:private mappings {:c->c [:continuous :continuous]
+                         :c->d [:continuous :discrete]
+                         :d->c [:discrete :continuous]
+                         :d->d [:discrete :discrete]
+                         :dt->c [:datetime :continuous]})
+
+(def mapping
+  {:linear (mappings :c->c)
+   :interpolated (mappings :c->c)
+   :log (mappings :c->c)
+   :symlog (mappings :c->c)
+   :bands (mappings :d->c)
+   :ordinal (mappings :d->d)
+   :quantile (mappings :c->d)
+   :datetime (mappings :dt->c)})
+
+(defn- general-size
+  [data typ]
+  (condp = typ
+    :discrete (count data)
+    :continuous (- (last data) (first data))
+    (duration (last data) (first data))))
+
+(defn size
+  ([scale] (size scale :range))
+  ([scale range-or-domain]
+   (let [[dtype rtype] (-> scale kind mapping)]
+     (if (= range-or-domain :domain)
+       (general-size (domain scale) dtype)
+       (general-size (range scale) rtype)))))
 
 (comment
 
