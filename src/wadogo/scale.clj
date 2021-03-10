@@ -7,10 +7,12 @@
             [wadogo.scale.interpolated]
             [wadogo.scale.log]
             [wadogo.scale.symlog]
+            [wadogo.scale.pow]
             [wadogo.scale.bands]
             [wadogo.scale.ordinal]
             [wadogo.scale.quantile]
-            [wadogo.scale.datetime])
+            [wadogo.scale.datetime]
+            [wadogo.scale.constant])
   (:import [wadogo.common ScaleType]))
 
 (set! *warn-on-reflection* true)
@@ -52,17 +54,20 @@
    :interpolated (mappings :c->c)
    :log (mappings :c->c)
    :symlog (mappings :c->c)
+   :pow (mappings :c->c)
    :bands (mappings :d->c)
    :ordinal (mappings :d->d)
    :quantile (mappings :c->d)
-   :datetime (mappings :dt->c)})
+   :datetime (mappings :dt->c)
+   :constant (mappings :d->d)})
 
 (defn- general-size
   [data typ]
   (condp = typ
-    :discrete (count data)
+    :discrete (if (sequential? data) (count data) 1)
     :continuous (- (last data) (first data))
-    (duration (last data) (first data))))
+    :datetime (duration (last data) (first data))
+    nil))
 
 (defn size
   ([scale] (size scale :range))
@@ -71,6 +76,12 @@
      (if (= range-or-domain :domain)
        (general-size (domain scale) dtype)
        (general-size (range scale) rtype)))))
+
+
+
+
+
+
 
 (comment
 
@@ -102,4 +113,16 @@
   (with-range my-scale [-10 -20])
   ;; => #object[wadogo.core$reify_scale$reify__25948 0x4519228c "[-1 2] -> [-10 -20] {:kind :linear}"]
 
-  )
+  
+
+  (def dt1 (java.time.LocalDateTime/of 2012 5 5 10 10 10))
+  (def dt2 (java.time.LocalDateTime/of 2012 12 5 10 10 10))
+  (def dt-scale (scale :datetime {:domain [dt1 dt2]}))
+
+  (require '[wadogo.ticks.datetime :as tdt]
+           '[wadogo.format.datetime :as fdt])
+
+
+  (def dt-ticks (tdt/datetime-ticks dt1 dt2 (data dt-scale :millis) 10))
+
+  ((fdt/time-format dt-ticks) (first dt-ticks)))

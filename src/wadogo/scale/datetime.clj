@@ -2,7 +2,8 @@
   (:require [fastmath.core :as m]
             [java-time :as dt]
 
-            [wadogo.common :refer [scale ->ScaleType]]))
+            [wadogo.common :refer [scale ->ScaleType]]
+            [wadogo.utils :refer [datetime-diff-millis]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -21,14 +22,6 @@
                                        (dt/millis)
                                        (dt/plus epoch))
     :else ld))
-
-(defn- datetime-diff-millis
-  "Calculate time duration in milliseconds.nanoseconds."
-  ^BigDecimal [start end]
-  (let [dur (dt/duration start end)
-        seconds (BigDecimal. ^long (dt/value (dt/property dur :seconds)))
-        nanos (.divide (BigDecimal. ^long (dt/value (dt/property dur :nanos))) 1000000.0M)]
-    (.add nanos (.multiply seconds 1000.0M))))
 
 (defn- datetime-forward
   "Create function which returns offset from starting date for given temporal value."

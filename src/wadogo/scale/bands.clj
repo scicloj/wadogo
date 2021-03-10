@@ -72,10 +72,15 @@
                          [lstart lend] (if (neg? step) [lend lstart] [lstart lend])]]
                {:start (norm lstart)
                 :end (norm lend)
-                :point (norm (m/lerp lstart lend align))})]
+                :point (norm (m/lerp lstart lend align))})
+         forward (zipmap bands lst)]
      
      (->ScaleType :bands bands (:range params)
-                  (zipmap bands lst)
+                  (fn local-forward
+                    ([v] (local-forward v true))
+                    ([v interval?]
+                     (let [res (forward v)]
+                       (if interval? res (:point res)))))
                   (bands-inverse-fn  bands lst)
                   (assoc (strip-keys params)
                          :bandwidth (* rdiff (m/abs size))
