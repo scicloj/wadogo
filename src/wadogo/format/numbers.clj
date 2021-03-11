@@ -98,8 +98,8 @@
   Returns formatter."
   ([xs] (formatter xs 8))
   ([xs ^long digits] (formatter xs digits 8))
-  ([xs ^long digits ^long threshold] (formatter xs digits threshold true))
-  ([xs ^long digits ^long threshold padding?]
+  ([xs ^long digits ^long threshold] (formatter xs digits threshold false))
+  ([xs ^long digits ^long threshold trim?]
    (let [[e? ^long exp ^long lft ^long rght ^long non-finite-len] (fit-precision xs digits threshold)
          w (max non-finite-len (if e?
                                  (+ lft rght exp 3) ;; 3 = "." + sign of E + "E"
@@ -116,7 +116,7 @@
                                                    (== ##Inf x) "Inf"
                                                    (== ##-Inf x) "-Inf"
                                                    :else "NaN")))]
-         (if padding? res (trim res)))))))
+         (if trim? (trim res) res))))))
 
 (defn format-sequence
   "Format sequence of double for given:
@@ -128,6 +128,7 @@
   Returns sequence of strings."
   ([xs] (format-sequence xs 8))
   ([xs ^long digits] (format-sequence xs digits 8))
-  ([xs ^long digits ^long threshold]
-   (let [fmt (formatter xs digits threshold)]
+  ([xs ^long digits ^long threshold] (format-sequence xs digits threshold false))
+  ([xs ^long digits ^long threshold trim?]
+   (let [fmt (formatter xs digits threshold trim?)]
      (map fmt xs))))

@@ -5,43 +5,55 @@
             [wadogo.utils :refer [interval-steps-before strip-keys]]))
 
 (def ^:private quantile-params
-  {:quantiles 10
-   :estimation-strategy :legacy
-   :align 0.5})
+  {:domain [0]
+   :range 4
+   :estimation-strategy :legacy})
+
+(defn- build-quantiles?
+  [r]
+  (if (sequential? r)
+    (if (every? #(and (number? %)
+                      (pos? %)
+                      (<= % 1.0)) r)
+      [true r]
+      [false (rest (m/slice-range (inc (count r))))])
+    [true (rest (m/slice-range (inc (long r))))]))
 
 (defmethod scale :quantile
   ([_] (scale :quantile {}))
   ([_ params]
+   (assert (seq (:domain params)) "Domain can't be empty, please provide any data as a sequence of numbers")
    (let [params (merge quantile-params params)
-         xs (m/seq->double-array (:domain params))
-         quantiles (:quantiles params)
-         align (m/constrain ^double (:align params) 0.0 1.0)
+         xs (m/seq->double-array (remove nil? (:domain params)))
          [start end] (stats/extent xs)
-         quantiles (if (sequential? quantiles)
-                     quantiles
-                     (rest (m/slice-range (inc (long quantiles)))))
+         r (:range params)
+         [quantiles? quantiles] (build-quantiles? r)
+
          steps (stats/quantiles xs quantiles (:estimation-strategy params))
          steps-corr (conj (seq steps) start)
-         r (mapv (fn [id [^double x1 ^double x2] q]
-                   {:start x1
-                    :end x2
-                    :point (m/mlerp x1 x2 align)
-                    :id id
-                    :quantile q}) (range) (partition 2 1 steps-corr) quantiles)
-         forward (comp r (interval-steps-before steps))]
-     (->ScaleType :quantile xs [start end]
+         step-fn (interval-steps-before steps)
+         ids (->> xs (map step-fn) frequencies)
+         values (mapv (fn [id [^double x1 ^double x2] q]
+                        {:dstart x1
+                         :dend x2
+                         :value (if quantiles? q (nth r id))
+                         :count (ids id)
+                         :quantile q}) (range) (partition 2 1 steps-corr) quantiles)
+         forward (comp values step-fn)]
+     (->ScaleType :quantile xs (if quantiles? quantiles r)
                   (fn local-forward
                     ([^double v interval?]
-                     (let [res (when (<= start v end)
-                                 (forward v))]
-                       (if interval? res (:quantile res))))
+                     (let [res (when (<= start v end) (forward v))]
+                       (if interval? res (:value res))))
                     ([^double v] (local-forward v false)))
-                  (into {} (map (fn [{:keys [quantile start end]}]
-                                  [quantile [start end]] ) r))
-                  (assoc (strip-keys params) :quantiles quantiles)))))
+                  (reduce (fn [curr m]
+                            (if (curr (:value m)) curr
+                                (assoc curr (:value m) m))) {} values)
+                  (assoc (strip-keys params) :quantiles (butlast (map (juxt :dend :quantile) values)))))))
 
-#_(.inverse-fn (scale :quantile {:domain d
-                                 :quantiles [0.25 0.5 0.75 1]}))
+
+#_(scale :quantile {:domain d
+                    :quantiles [0.25 0.5 0.75 1]})
 
 #_(def d
     [5.1

@@ -13,13 +13,14 @@ Scales for Clojure. Domain -> range transformations of various types. Derived fr
 * linear
 * logarthmic
 * symmetrical log ([read here](https://www.researchgate.net/profile/John_Webber4/publication/233967063_A_bi-symmetric_log_transformation_for_wide-range_data/links/0fcfd50d791c85082e000000.pdf))
-* exponential (under development)
+* exponential (pow)
 * interpolated
-* date/time (under development)
+* date/time
 
 ### continuous -> discrete
 
 * quantiles
+* histogram (under development)
 * threashold (under development)
 * quantize (under development)
 

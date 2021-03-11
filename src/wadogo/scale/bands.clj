@@ -5,9 +5,10 @@
 
   Each band is a map with following keys:
 
-  * start - interval start
-  * end - interval end
+  * rstart - interval start
+  * rend - interval end
   * point - selected point (default: midpoint)
+  * value - domain value
 
   Input parameters are:
 
@@ -70,8 +71,9 @@
                    :let [lstart (+ nstart (* i step))
                          lend (+ lstart size)
                          [lstart lend] (if (neg? step) [lend lstart] [lstart lend])]]
-               {:start (norm lstart)
-                :end (norm lend)
+               {:value (nth bands i)
+                :rstart (norm lstart)
+                :rend (norm lend)
                 :point (norm (m/lerp lstart lend align))})
          forward (zipmap bands lst)]
      

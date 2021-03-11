@@ -22,9 +22,9 @@
                (s/inverse l n) => n))
 
     (fact "can be changed"
-      (-> (s/set-domain l [1 2])
+      (-> (s/with-domain l [1 2])
           (s/domain)) => [1 2]
-      (-> (s/set-range l [-100 100])
+      (-> (s/with-range l [-100 100])
           (s/range)) => [-100 100])))
 
 (facts "custom linear scale"
