@@ -7,6 +7,6 @@
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :lein-tools-deps/config {:config-files [:install :user :project]}
   :profiles {:dev {:cloverage    {:runner :midje}
-                   :dependencies [[midje "1.9.9"]]
+                   :dependencies [[midje "1.9.10"]]
                    :plugins      [[lein-midje "3.2.2"]
                                   [lein-cloverage "1.2.2"]]}})
