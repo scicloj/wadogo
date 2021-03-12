@@ -21,7 +21,7 @@ Scales for Clojure. Domain -> range transformations of various types. Derived fr
 
 * quantiles
 * histogram (under development)
-* threashold (under development)
+* threshold (under development)
 * quantize (under development)
 
 ### discrete -> continuous
