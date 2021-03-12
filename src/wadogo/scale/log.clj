@@ -1,6 +1,7 @@
 (ns wadogo.scale.log
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys]]
+            [fastmath.stats :as stats]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -18,7 +19,7 @@
     (fn ^double [^double v] (- (m/exp (norm v))))
     (fn ^double [^double v] (m/exp (norm v)))))
 
-(def ^:private log-params
+(def default-params
   {:domain [1.0 10.0]
    :range [0.0 1.0]
    :base 10.0})
@@ -26,9 +27,9 @@
 (defmethod scale :log
   ([_] (scale :log {}))
   ([_ params]
-   (let [params (merge log-params params)
-         [^double dstart ^double dend] (:domain params)
-         [rstart rend] (:range params)
+   (let [params (merge default-params params)
+         [^double dstart ^double dend] (stats/extent (:domain params))
+         [rstart rend] (stats/extent (:range params))
          n? (neg? dstart)
          ls (m/log (if n? (- dstart) dstart))
          le (m/log (if n? (- dend) dend))]
