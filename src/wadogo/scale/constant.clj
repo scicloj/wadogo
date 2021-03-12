@@ -1,5 +1,5 @@
 (ns wadogo.scale.constant
-  (:require [wadogo.common :refer [scale ->ScaleType]]))
+  (:require [wadogo.common :refer [scale ->ScaleType strip-keys]]))
 
 (defmethod scale :constant
   ([_] (scale :constant {}))
@@ -7,4 +7,4 @@
    (->ScaleType :constant (:domain params) (:range params)
                 (constantly (:range params))
                 (constantly (:domain params))
-                nil)))
+                (strip-keys params))))

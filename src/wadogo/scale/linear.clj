@@ -1,5 +1,5 @@
 (ns wadogo.scale.linear
-  (:require [wadogo.common :refer [scale ->ScaleType]]
+  (:require [wadogo.common :refer [scale ->ScaleType strip-keys]]
             [wadogo.utils :refer [make-norm]]))
 
 (set! *warn-on-reflection* true)
@@ -18,4 +18,4 @@
      (->ScaleType :linear (:domain params) (:range params) 
                   (make-norm dstart dend rstart rend)
                   (make-norm rstart rend dstart dend)
-                  nil))))
+                  (strip-keys params)))))

@@ -1,8 +1,7 @@
 (ns wadogo.scale.interpolated
   (:require [fastmath.interpolation :refer [interpolators-1d-list]]
             
-            [wadogo.common :refer [scale ->ScaleType]]
-            [wadogo.utils :refer [strip-keys]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys]]))
 
 (def ^:private interpolators
   {:cubic :cubic-spline

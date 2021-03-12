@@ -2,8 +2,7 @@
 
 (ns wadogo.scale.symlog
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType]]
-            [wadogo.utils :refer [strip-keys]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)

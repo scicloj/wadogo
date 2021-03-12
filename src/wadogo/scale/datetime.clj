@@ -2,7 +2,7 @@
   (:require [fastmath.core :as m]
             [java-time :as dt]
 
-            [wadogo.common :refer [scale ->ScaleType]]
+            [wadogo.common :refer [scale ->ScaleType strip-keys]]
             [wadogo.utils :refer [datetime-diff-millis]]))
 
 (set! *warn-on-reflection* true)
@@ -56,4 +56,4 @@
      (->ScaleType :datetime [start end] (:range params)
                   (datetime-forward start total)
                   (datetime-inverse start total)
-                  {:millis total}))))
+                  (assoc (strip-keys params) :millis total)))))

@@ -11,6 +11,9 @@
             [wadogo.scale.bands]
             [wadogo.scale.ordinal]
             [wadogo.scale.quantile]
+            [wadogo.scale.quantize]
+            [wadogo.scale.threshold]
+            [wadogo.scale.histogram]
             [wadogo.scale.datetime]
             [wadogo.scale.constant])
   (:import [wadogo.common ScaleType]))
@@ -58,6 +61,9 @@
    :bands (mappings :d->c)
    :ordinal (mappings :d->d)
    :quantile (mappings :c->d)
+   :quantize (mappings :c->d)
+   :threshold (mappings :c->d)
+   :histogram (mappings :c->d)
    :datetime (mappings :dt->c)
    :constant (mappings :d->d)})
 

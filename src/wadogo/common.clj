@@ -17,6 +17,8 @@
          :domain (.domain scale)
          :range (.range scale)))
 
+(defn strip-keys [m] (dissoc m :domain :range :kind))
+
 (defmulti scale (fn [k & _] k))
 (defmulti ticks (fn [k & _] k))
 (defmulti nice (fn [k _] k))

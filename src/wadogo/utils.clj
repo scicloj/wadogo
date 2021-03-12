@@ -33,7 +33,17 @@
           :else half)))
     (m/make-norm dstart dend rstart rend)))
 
-(defn strip-keys [m] (dissoc m :domain :range :kind))
+(defn build-seq
+  [count-or-seq]
+  (if (sequential? count-or-seq)
+    [(count count-or-seq) count-or-seq]
+    [count-or-seq (range count-or-seq)]))
+
+(defn values->reversed-map
+  [values k]
+  (reduce (fn [curr m]
+            (if (curr (m k)) curr
+                (assoc curr (m k) m))) {} values))
 
 ;; datetime
 
