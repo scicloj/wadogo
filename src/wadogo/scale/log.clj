@@ -33,7 +33,7 @@
          n? (neg? dstart)
          ls (m/log (if n? (- dstart) dstart))
          le (m/log (if n? (- dend) dend))]
-     (->ScaleType :log (:domain params) (:range params)
+     (->ScaleType :log (:domain params) (:range params) (:ticks params) (:fmt params)
                   (log-forward n? (m/make-norm ls le rstart rend))
                   (log-inverse n? (m/make-norm rstart rend ls le))
                   (strip-keys params)))))

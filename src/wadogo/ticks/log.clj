@@ -24,13 +24,13 @@
     :else (fn ^double [^double x] (m/pow base x))))
 
 (defn log-ticks
-  [^double start ^double end ^long count ^double base]
+  [^double start ^double end cnt ^double base]
   (let [negative? (neg? start)
         logs (logp base)
         pows (powp base)
         ^double lstart (logs (m/abs start))
         ^double lend (logs (m/abs end))
-        ^long c (or count (max 1 (- lend lstart)))]
+        ^long c (or cnt (max 1 (- lend lstart)))]
     (println lstart lend)
     (map (fn [^double v]
            (let [^double pv (pows v)]

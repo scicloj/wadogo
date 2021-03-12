@@ -4,7 +4,7 @@
 (defmethod scale :constant
   ([_] (scale :constant {}))
   ([_ params]
-   (->ScaleType :constant (:domain params) (:range params)
+   (->ScaleType :constant (:domain params) (:range params) (:ticks params) (:fmt params)
                 (constantly (:range params))
                 (constantly (:domain params))
                 (strip-keys params))))

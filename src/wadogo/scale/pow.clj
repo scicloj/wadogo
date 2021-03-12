@@ -51,7 +51,7 @@
          [pf pi] (map symmetric (pow-pairs (:exponent params)))
          pstart (pf dstart)
          pend (pf dend)]
-     (->ScaleType :pow (:domain params) (:range params)
+     (->ScaleType :pow (:domain params) (:range params) (:ticks params) (:fmt params)
                   (pow-forward pf (m/make-norm pstart pend rstart rend))
                   (pow-inverse pi (m/make-norm rstart rend pstart pend))
                   (strip-keys params)))))

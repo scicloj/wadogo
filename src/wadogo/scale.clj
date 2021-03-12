@@ -30,6 +30,12 @@
 (defn range [^ScaleType scale] (.range scale))
 (defn kind [^ScaleType scale] (.kind scale))
 
+(defn ticks [^ScaleType scale] (common/ticks scale))
+
+(defn fmt [^ScaleType scale]
+  (let [tcks (ticks scale)]
+    (map (common/fmt scale tcks) tcks)))
+
 (defn data
   ([^ScaleType scale]
    (.data scale))
@@ -45,27 +51,12 @@
    (common/scale (.kind scale) (merge (common/scale->map scale) data)))
   ([^ScaleType scale k v]
    (common/scale (.kind scale) (assoc (common/scale->map scale) k v))))
+(defn with-ticks [^ScaleType scale ticks]
+  (common/scale (.kind scale) (assoc (common/scale->map scale) :ticks ticks)))
+(defn with-fmt [^ScaleType scale fmt]
+  (common/scale (.kind scale) (assoc (common/scale->map scale) :fmt fmt)))
 
-(def ^:private mappings {:c->c [:continuous :continuous]
-                         :c->d [:continuous :discrete]
-                         :d->c [:discrete :continuous]
-                         :d->d [:discrete :discrete]
-                         :dt->c [:datetime :continuous]})
-
-(def mapping
-  {:linear (mappings :c->c)
-   :interpolated (mappings :c->c)
-   :log (mappings :c->c)
-   :symlog (mappings :c->c)
-   :pow (mappings :c->c)
-   :bands (mappings :d->c)
-   :ordinal (mappings :d->d)
-   :quantile (mappings :c->d)
-   :quantize (mappings :c->d)
-   :threshold (mappings :c->d)
-   :histogram (mappings :c->d)
-   :datetime (mappings :dt->c)
-   :constant (mappings :d->d)})
+(def mapping common/mapping)
 
 (defn- general-size
   [data typ]
@@ -82,10 +73,6 @@
      (if (= range-or-domain :domain)
        (general-size (domain scale) dtype)
        (general-size (range scale) rtype)))))
-
-
-
-
 
 
 
@@ -129,6 +116,10 @@
            '[wadogo.format.datetime :as fdt])
 
 
+  (fmt dt-scale)
+  
   (def dt-ticks (tdt/datetime-ticks dt1 dt2 (data dt-scale :millis) 10))
 
   ((fdt/time-format dt-ticks) (first dt-ticks)))
+
+

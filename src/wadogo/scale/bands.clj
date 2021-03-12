@@ -75,7 +75,7 @@
                 :point (norm (m/lerp lstart lend align))})
          forward (zipmap bands lst)]
      
-     (->ScaleType :bands bands (:range params)
+     (->ScaleType :bands bands (:range params) (:ticks params) (:fmt params)
                   (fn local-forward
                     ([v] (local-forward v true))
                     ([v interval?]

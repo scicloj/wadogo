@@ -1,5 +1,5 @@
 (ns wadogo.scale.linear
-  (:require [wadogo.common :refer [scale ->ScaleType strip-keys]]
+  (:require [wadogo.common :refer [scale ticks ->ScaleType strip-keys]]
             [wadogo.utils :refer [make-norm]]
             [fastmath.stats :as stats]))
 
@@ -16,7 +16,7 @@
    (let [params (merge default-params params)
          [dstart dend] (stats/extent (:domain params))
          [rstart rend] (stats/extent (:range params))]
-     (->ScaleType :linear (:domain params) (:range params) 
+     (->ScaleType :linear (:domain params) (:range params) (:ticks params) (:fmt params)
                   (make-norm dstart dend rstart rend)
                   (make-norm rstart rend dstart dend)
                   (strip-keys params)))))

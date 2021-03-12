@@ -26,7 +26,7 @@
                          :id id
                          :value (rv id)}) (partition 2 1 steps) (range n))
          forward (comp values step-fn)]
-     (->ScaleType :threshold (:domain params) rv
+     (->ScaleType :threshold (:domain params) rv (:ticks params) (:fmt params)
                   (fn local-forward
                     ([^double v interval?]
                      (let [res (forward v)]

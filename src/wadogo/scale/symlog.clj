@@ -71,7 +71,7 @@
          [rstart rend] (:range params)
          sls (forward dstart)
          sle (forward dend)]
-     (->ScaleType :symlog (:domain params) (:range params)
+     (->ScaleType :symlog (:domain params) (:range params) (:ticks params) (:fmt params)
                   (symlog-forward forward (m/make-norm sls sle rstart rend))
                   (symlog-inverse inverse (m/make-norm rstart rend sls sle))
                   (assoc (strip-keys params) :C C)))))

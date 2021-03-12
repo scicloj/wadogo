@@ -27,7 +27,7 @@
          ipairs (sort-by second pairs)
          inverse (interpolator (map second ipairs)
                                (map first ipairs))]
-     (->ScaleType :interpolated (:domain params) (:range params)
+     (->ScaleType :interpolated (:domain params) (:range params) (:ticks params) (:fmt params)
                   forward
                   inverse
                   (strip-keys params)))))

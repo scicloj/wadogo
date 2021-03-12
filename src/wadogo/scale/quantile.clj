@@ -44,7 +44,7 @@
                          :count (ids id)
                          :quantile q}) (range) (partition 2 1 steps-corr) quantiles)
          forward (comp values step-fn)]
-     (->ScaleType :quantile xs (if quantiles? quantiles r)
+     (->ScaleType :quantile xs (if quantiles? quantiles r) (:ticks params) (:fmt params)
                   (fn local-forward
                     ([^double v interval?]
                      (let [res (when (<= start v end) (forward v))]
