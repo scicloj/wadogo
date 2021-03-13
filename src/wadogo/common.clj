@@ -101,20 +101,20 @@
 ;;
 
 (defn- fmt->dispatch
-  [^ScaleType scale]
+  [^ScaleType scale tcks]
   (let [fmt (.fmt scale)
         kind (.kind scale)
-        [d r] (mapping kind)]
+        [d _] (mapping kind)]
     (cond
       (fn? fmt) :fn
       (= kind :bands) :default
       (= d :datetime) :datetime
-      (= r :continuous) :numerical
+      (some #(or (double? %) (float? %)) tcks) :doubles
       :else :default)))
 
-(defmulti fmt (fn [scale _] (fmt->dispatch scale)))
+(defmulti fmt (fn [scale tcks] (fmt->dispatch scale tcks)))
 
 (defmethod fmt :default [_ _] str)
 (defmethod fmt :fn [^ScaleType scale _] (.fmt scale))
 (defmethod fmt :datetime [_ tcks] (fdatetime/time-format tcks))
-(defmethod fmt :numerical [_ tcks] (fnumbers/formatter tcks 8 8 true))
+(defmethod fmt :doubles [^ScaleType scale _] (fnumbers/formatter (:fmt-params (.data scale))))

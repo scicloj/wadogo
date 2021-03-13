@@ -1,7 +1,6 @@
 (ns wadogo.format.numbers
-  (:require [clojure.pprint :refer [cl-format]]
-            [clojure.string :refer [trim]]
-            [fastmath.core :as m]))
+  (:require [fastmath.core :as m]
+            [clojure.string :as str]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -39,18 +38,10 @@
       1
       (find-nsig alpha digits))))
 
-(defn- fix-left
-  "Fix number of digits on the left side. For scientific notations and non-positive exponent (lft) it should be leading digits + sign."
-  [^double x ^long lft e?]
-  (let [sgn (if (neg? x) 1 0)]
-    (if (or e? (not (pos? lft)))
-      (+ sgn 1)
-      (+ sgn lft))))
-
 (defn- precision
   [^double x ^long digits ^long threshold]
   (if (zero? x)
-    [false 0 1 1] ;; zero is reprezented as 0.0
+    [(not (pos? threshold)) 0 1 1] ;; zero is reprezented as 0.0
     (let [digits (max 1 (min 10 digits)) ;; constrain digits to 1-10 range
           r (m/abs x)
           lft (left r) ;; digits on the left side of dot
@@ -63,72 +54,26 @@
                                      (/ r ^double (tbl (inc lft))))
                    :else (/ r (m/pow 10.0 (dec lft)))) ;; very big or very small case
           rght (right r-prec digits) ;; desired precision on the right side
-          exp (if (> alft 100) 3 2) ;; size of the exponent
-          lft (fix-left x lft e?)]
-      [e? exp lft rght])))
-
-(defn- fit-precision
-  "Find best matching presision for given sequence."
-  [xs ^long digits ^long threshold]
-  (reduce (fn [[ce? ^long cexp ^long clft ^long crght ^long non-finite-len] x]
-            (let [^double x (if (instance? Float x)
-                              (Double/valueOf (str x))
-                              (or x ##NaN))]
-              (if (Double/isFinite x)
-                (let [[e? ^long exp ^long lft ^long rght] (precision x digits threshold)]
-                  (if (and e? (pos? threshold))
-                    (reduced (fit-precision xs digits 0)) ;; switch to scientific notation
-                    [(or e? ce?)
-                     (max exp cexp)
-                     (max lft clft)
-                     (max rght crght)
-                     non-finite-len]))
-                [ce? cexp clft crght (max non-finite-len (if (= x ##-Inf) 4 3))])))
-          [false Integer/MIN_VALUE Integer/MIN_VALUE Integer/MIN_VALUE 0] xs))
-
-;; public functions
+          ]
+      [e? rght])))
 
 (defn formatter
-  "Create formatter for given:
-
-  * `xs` - sequence of doubles
-  * `digits` - maximum precision
-  * `threshold` - what is absolute power to switch to scientific notation
-
-  Returns formatter."
-  ([xs] (formatter xs 8))
-  ([xs ^long digits] (formatter xs digits 8))
-  ([xs ^long digits ^long threshold] (formatter xs digits threshold false))
-  ([xs ^long digits ^long threshold trim?]
-   (let [[e? ^long exp ^long lft ^long rght ^long non-finite-len] (fit-precision xs digits threshold)
-         w (max non-finite-len (if e?
-                                 (+ lft rght exp 3) ;; 3 = "." + sign of E + "E"
-                                 (+ lft rght 1))) ;; 1 for "."
-         fmt (if e?
-               (str "~" w "," rght "," exp "E")
-               (str "~" w "," rght "F"))
-         non-finite-fmt (str "~" w "@A")]
-     (fn [x]
-       (let [^double x (or x ##NaN)
-             res (if (Double/isFinite x)
-                   (cl-format nil fmt x)
-                   (cl-format nil non-finite-fmt (cond
-                                                   (== ##Inf x) "Inf"
-                                                   (== ##-Inf x) "-Inf"
-                                                   :else "NaN")))]
-         (if trim? (trim res) res))))))
-
-(defn format-sequence
-  "Format sequence of double for given:
-
-  * `xs` - sequence of doubles
-  * `digits` - maximum precision
-  * `threshold` - what is absolute power to switch to scientific notation
-
-  Returns sequence of strings."
-  ([xs] (format-sequence xs 8))
-  ([xs ^long digits] (format-sequence xs digits 8))
-  ([xs ^long digits ^long threshold] (format-sequence xs digits threshold false))
-  ([xs ^long digits ^long threshold trim?]
-   (let [fmt (formatter xs digits threshold trim?)]
-     (map fmt xs))))
+  ([] (formatter {}))
+  ([{:keys [^long digits threshold na nan inf -inf]
+     :or {digits -6 threshold 8 na "NA" nan "NaN" inf "∞" -inf "-∞"}}]
+   (fn [x]
+     (if x
+       (let [cut? (neg? digits)
+             digits (if cut? (- digits) digits)
+             [e? right] (precision x digits threshold)
+             digits (max 1 (long (if cut? right digits)))
+             x (if (or (double? x)
+                       (float? x)) x (double x))]
+         (cond
+           (m/nan? (double x)) nan
+           (m/pos-inf? (double x)) inf
+           (m/neg-inf? (double x)) -inf
+           
+           (zero? (double x)) (if e? (str "0." (str/join (repeat digits "0")) "E+00") "0.0")
+           :else (format (str "%." digits (if e? "E" "f")) x)))
+       na))))
