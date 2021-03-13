@@ -6,8 +6,4 @@
   :plugins [[lein-tools-deps "0.4.5"]]
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :lein-tools-deps/config {:config-files [:install :user :project]}
-  :profiles {:dev {:cloverage    {:runner :midje}
-                   :dependencies [[midje "1.9.10"]
-                                  [scicloj/notespace "3-beta4"]]
-                   :plugins      [[lein-midje "3.2.2"]
-                                  [lein-cloverage "1.2.2"]]}})
+  :profiles {:dev {:dependencies [[scicloj/notespace "3-beta4"]]}})

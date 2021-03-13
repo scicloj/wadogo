@@ -1,69 +1,70 @@
 (ns wadogo.scale.linear-test
   (:require [wadogo.scale :as s]
-            [midje.sweet :refer [facts fact => roughly]]
-            [midje.experimental :refer [for-all]]
+            [clojure.test.check :as tc]
             [clojure.test.check.generators :as gen]
-            [fastmath.core :as m]))
+            [clojure.test.check.properties :as prop]
+            [fastmath.core :as m]
+            [clojure.test :refer [deftest testing is]]))
 
-(facts "default linear scale"
+(deftest default-linear-scale
   (let [l (s/scale :linear)]
 
-    (fact "has defaults"
-      (s/domain l) => [0.0 1.0]
-      (s/range l) => [0.0 1.0]
-      (s/kind l) => :linear)
+    (testing "field values"
+      (is (= (s/domain l) [0.0 1.0]))
+      (is (= (s/range l) [0.0 1.0]))
+      (is (= (s/kind l) :linear)))
     
-    (fact "is identity"
-      (for-all [n (gen/double* {:min 0.0 :max 1.0 :NaN? false})]
-               {:num-tests 100}
+    (testing "identity"
+      (is (:pass? (tc/quick-check
+                   100
+                   (prop/for-all* [(gen/double* {:min 0.0 :max 1.0 :NaN? false})]
+                                  (fn [n] (and (= (l n) n)
+                                              (= (s/forward l n) n)
+                                              (= (s/inverse l n) n))))))))
 
-               (l n) => n
-               (s/forward l n) => n
-               (s/inverse l n) => n))
+    (testing "field modification"
+      (is (= (-> (s/with-domain l [1 2])
+                 (s/domain)) [1 2]))
+      (is (= (-> (s/with-range l [-100 100])
+                 (s/range)) [-100 100])))))
 
-    (fact "can be changed"
-      (-> (s/with-domain l [1 2])
-          (s/domain)) => [1 2]
-      (-> (s/with-range l [-100 100])
-          (s/range)) => [-100 100])))
-
-(facts "custom linear scale"
+(deftest custom-linear-scale
   (let [l (s/scale :linear {:domain [0 100]
                             :range [0 200]})]
 
-    (fact "has proper domain and range"
-      (s/domain l) => [0 100]
-      (s/range l) => [0 200])
+    (testing "proper domain and range"
+      (is (= (s/domain l) [0 100]))
+      (is (= (s/range l) [0 200])))
 
-    (fact "scales properly"
-      (for-all [n (gen/double* {:min 0.0 :max 100.0 :infinite? false :NaN? false})]
-               {:num-tests 100}
+    (testing "scaling"
+      (is (:pass? (tc/quick-check
+                   100
+                   (prop/for-all* [(gen/double* {:min 0.0 :max 100.0 :infinite? false :NaN? false})]
+                                  (fn [n] (and (m/approx-eq (l n) (* 2.0 n))
+                                              (m/approx-eq (s/forward l n) (* 2.0 n))
+                                              (m/approx-eq (s/inverse l n) (* 0.5 n)))))))))))
 
-               (l n) => (roughly (* 2.0 n))
-               (s/forward l n) => (roughly (* 2.0 n))
-               (s/inverse l n) => (roughly (* 0.5 n))))))
-
-(facts "zero length domain or range"
+(deftest zero-length-domain-or-range
   (let [l (s/scale :linear {:domain [0 0]})]
-    (fact "forwards to middle of the range"
-      (l 0) => 0.5
-      (l -1) => 0.0
-      (l 1) => 1.0
-      (s/inverse l 0) => 0.0
-      (s/inverse l 0.5) => 0.0
-      (s/inverse l 1.0) => 0.0))
+    (testing "forwarding to middle of the range"
+      (is (= (l 0) 0.5))
+      (is (= (l -1) 0.0))
+      (is (= (l 1) 1.0))
+      (is (= (s/inverse l 0) 0.0))
+      (is (= (s/inverse l 0.5) 0.0))
+      (is (= (s/inverse l 1.0) 0.0))))
 
   (let [l (s/scale :linear {:range [0 0]})]
-    (fact "inverts to middle of the domain"
-      (l 0) => 0.0
-      (l 0.5) => 0.0
-      (l 1) => 0.0
-      (s/inverse l 0) => 0.5
-      (s/inverse l -1) => 0.0
-      (s/inverse l 1) => 1.0)))
+    (testing "inverting to the middle of the domain"
+      (is (= (l 0) 0.0))
+      (is (= (l 0.5) 0.0))
+      (is (= (l 1) 0.0))
+      (is (= (s/inverse l 0) 0.5))
+      (is (= (s/inverse l -1) 0.0))
+      (is (= (s/inverse l 1) 1.0)))))
 
-(fact "accepts all double values"
+(deftest invalid-doubles
   (let [l (s/scale :linear)]
-    (l ##NaN) => m/nan?
-    (l ##Inf) => ##Inf
-    (l ##-Inf) => ##-Inf))
+    (is (m/nan? (l ##NaN)))
+    (is (= (l ##Inf) ##Inf))
+    (is (= (l ##-Inf) ##-Inf))))
