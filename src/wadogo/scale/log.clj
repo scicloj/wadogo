@@ -28,8 +28,8 @@
   ([_] (scale :log {}))
   ([_ params]
    (let [params (merge default-params params)
-         [^double dstart ^double dend] (stats/extent (:domain params))
-         [rstart rend] (stats/extent (:range params))
+         [^double dstart ^double dend] (:domain params)
+         [rstart rend] (:range params)
          n? (neg? dstart)
          ls (m/log (if n? (- dstart) dstart))
          le (m/log (if n? (- dend) dend))]
