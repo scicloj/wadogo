@@ -15,7 +15,9 @@
             [wadogo.scale.threshold]
             [wadogo.scale.histogram]
             [wadogo.scale.datetime]
-            [wadogo.scale.constant])
+            [wadogo.scale.constant]
+            
+            [fastmath.stats :as stats])
   (:import [wadogo.common ScaleType]))
 
 (set! *warn-on-reflection* true)
@@ -73,6 +75,10 @@
      (if (= range-or-domain :domain)
        (general-size (domain scale) dtype)
        (general-size (range scale) rtype)))))
+
+(defn extent [xs]
+  (let [[minx maxx] (stats/extent xs)]
+    [minx maxx]))
 
 (comment
 
