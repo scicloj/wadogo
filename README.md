@@ -25,7 +25,7 @@ In progress:
 
 ### continuous -> discrete
 
-* threashold
+* threshold
 * quantize
 
 #### continuous data -> discrete
