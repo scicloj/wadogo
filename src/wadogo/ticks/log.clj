@@ -31,7 +31,6 @@
         ^double lstart (logs (m/abs start))
         ^double lend (logs (m/abs end))
         ^long c (or cnt (max 1 (- lend lstart)))]
-    (println lstart lend)
     (map (fn [^double v]
            (let [^double pv (pows v)]
              (if negative? (- pv) pv))) (linear-ticks lstart lend c))))
