@@ -68,3 +68,8 @@
     (is (m/nan? (l ##NaN)))
     (is (= (l ##Inf) ##Inf))
     (is (= (l ##-Inf) ##-Inf))))
+
+(deftest descending-range
+  (let [l (s/scale :linear {:domain [0 1] :range [100 0]})]
+    (is (= (l 1) 0.0))
+    (is (= (l 0) 100.0))))

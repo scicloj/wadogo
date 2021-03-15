@@ -37,3 +37,8 @@
       (is (m/approx-eq (s/inverse l 0.5849625) 1.5))
       (is (m/approx-eq (s/inverse l 1.0) 2.0))
       (is (m/approx-eq (s/inverse l 1.3219281) 2.5)))))
+
+(deftest descending-range-log-scale
+  (let [l (s/scale :log {:domain [1 10] :range [10 1]})]
+    (is (= (l 10) 1.0))
+    (is (= (l 1) 10.0))))

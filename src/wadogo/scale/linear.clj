@@ -14,8 +14,8 @@
   ([_] (scale :linear {}))
   ([_ params]
    (let [params (merge default-params params)
-         [dstart dend] (stats/extent (:domain params))
-         [rstart rend] (stats/extent (:range params))]
+         [dstart dend] (:domain params)
+         [rstart rend] (:range params)]
      (->ScaleType :linear (:domain params) (:range params) (:ticks params) (:fmt params)
                   (make-norm dstart dend rstart rend)
                   (make-norm rstart rend dstart dend)
