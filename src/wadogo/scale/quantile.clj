@@ -9,7 +9,7 @@
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 
-(def ^:private quantile-params
+(def default-params
   {:range 4
    :estimation-strategy :legacy})
 
@@ -27,7 +27,7 @@
   ([_] (scale :quantile {}))
   ([_ params]
    (assert (seq (:domain params)) "Domain can't be empty, please provide any data as a sequence of numbers")
-   (let [params (merge quantile-params params)
+   (let [params (merge default-params params)
          xs (m/seq->double-array (remove nil? (:domain params)))
          [^double start ^double end] (stats/extent xs)
          r (:range params)
@@ -44,7 +44,7 @@
                          :count (ids id)
                          :quantile q}) (range) (partition 2 1 steps-corr) quantiles)
          forward (comp values step-fn)]
-     (->ScaleType :quantile xs (if quantiles? quantiles r) (:ticks params) (:fmt params)
+     (->ScaleType :quantile xs (if quantiles? quantiles r) (:ticks params) (:formatter params)
                   (fn local-forward
                     ([^double v interval?]
                      (let [res (when (<= start v end) (forward v))]

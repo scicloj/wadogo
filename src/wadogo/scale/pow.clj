@@ -37,7 +37,7 @@
   (fn ^double [^double x]
     (pi (norm x))))
 
-(def ^:private pow-params
+(def default-params
   {:domain [0.0 1.0]
    :range [0.0 1.0]
    :exponent 0.5})
@@ -45,13 +45,13 @@
 (defmethod scale :pow
   ([_] (scale :pow {}))
   ([_ params]
-   (let [params (merge pow-params params)
+   (let [params (merge default-params params)
          [dstart dend] (:domain params)
          [rstart rend] (:range params)
          [pf pi] (map symmetric (pow-pairs (:exponent params)))
          pstart (pf dstart)
          pend (pf dend)]
-     (->ScaleType :pow (:domain params) (:range params) (:ticks params) (:fmt params)
+     (->ScaleType :pow (:domain params) (:range params) (:ticks params) (:formatter params)
                   (pow-forward pf (m/make-norm pstart pend rstart rend))
                   (pow-inverse pi (m/make-norm rstart rend pstart pend))
                   (strip-keys params)))))

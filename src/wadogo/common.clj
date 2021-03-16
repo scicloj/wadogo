@@ -31,7 +31,7 @@
    :datetime (mappings :dt->c)
    :constant (mappings :d->d)})
 
-(deftype ScaleType [kind domain range ticks fmt forward-fn inverse-fn data]
+(deftype ScaleType [kind domain range ticks formatter forward-fn inverse-fn data]
   Object
   (toString [_]
     (str (name kind) ": " domain " -> " range (when data (str " " data))))
@@ -46,9 +46,9 @@
          :domain (.domain scale)
          :range (.range scale)
          :ticks (.ticks scale)
-         :fmt (.fmt scale)))
+         :formatter (.formatter scale)))
 
-(defn strip-keys [m] (dissoc m :domain :range :kind :ticks :fmt))
+(defn strip-keys [m] (dissoc m :domain :range :kind :ticks :formatter))
 
 ;;
 
@@ -100,21 +100,24 @@
 
 ;;
 
-(defn- fmt->dispatch
+(defn- formatter->dispatch
   [^ScaleType scale tcks]
-  (let [fmt (.fmt scale)
+  (let [formatter (.formatter scale)
         kind (.kind scale)
-        [d _] (mapping kind)]
+        [d _] (mapping kind)
+        stcks (remove nil? tcks)]
     (cond
-      (fn? fmt) :fn
+      (fn? formatter) :fn
       (= kind :bands) :default
       (= d :datetime) :datetime
       (some #(or (double? %) (float? %)) tcks) :doubles
+      (and stcks (every? int? stcks)) :ints
       :else :default)))
 
-(defmulti fmt (fn [scale tcks] (fmt->dispatch scale tcks)))
+(defmulti formatter (fn [scale tcks] (formatter->dispatch scale tcks)))
 
-(defmethod fmt :default [_ _] str)
-(defmethod fmt :fn [^ScaleType scale _] (.fmt scale))
-(defmethod fmt :datetime [_ tcks] (fdatetime/time-format tcks))
-(defmethod fmt :doubles [^ScaleType scale _] (fnumbers/formatter (:fmt-params (.data scale))))
+(defmethod formatter :default [_ _] str)
+(defmethod formatter :fn [^ScaleType scale _] (.formatter scale))
+(defmethod formatter :datetime [_ tcks] (fdatetime/time-format tcks))
+(defmethod formatter :ints [^ScaleType scale _] (fnumbers/int-formatter (:formatter-params (.data scale))))
+(defmethod formatter :doubles [^ScaleType scale _] (fnumbers/formatter (:formatter-params (.data scale))))

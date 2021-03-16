@@ -14,7 +14,7 @@
 
 You have an access to 13 different scales with unified api.
 
-*The `wadogo` name came up after trying to translate word `scale` into different languages using [google translate](https://translate.google.com/?sl=en&tl=sw&text=scale&op=translate). Swahili word was very pleasant and was choosen on `zulip` by a community. Funny enough is that `wadogo` doesn't mean `scale` at all but `small` or `little`. It's just translate is wrong.*"] 
+*The `wadogo` name came up after trying to translate word `scale` into different languages using [google translate](https://translate.google.com/?sl=en&tl=sw&text=scale&op=translate). Swahili word was very pleasant and was choosen on `zulip` by a community. Funny enough is that `wadogo` doesn't mean `scale` at all but `small` or `little`. Translator failed here.*"] 
 
 ["## Common functions"]
 
@@ -80,11 +80,53 @@ linear
 
 ["### Ticks"]
 
-["*TODO*"]
+["Every scale is able to produce `ticks`, ie. sequence of values which is taken from domain (or range in certain cases). User can also provide own ticks or expected number of ticks."]
+
+(s/ticks (s/scale :linear {:ticks 5}))
+
+(s/ticks (s/scale :linear {:ticks [0.2 0.5 0.9]}))
 
 ["### Formatting"]
 
-["*TODO*"]
+["Ticks (or any values) can be formatter to a string. `wadogo` provides some default formatters for different kind of scales.
+
+* `format` - formats ticks or provided sequence
+* `formatter` returns a formatter
+
+Custom formatter can be provided by setting `formatter` key during scale creation."]
+
+(s/format linear)
+
+(s/format (s/scale :linear {:formatter (comp str int)}))
+
+((s/formatter linear) 33.343)
+
+["#### Formatting numbers"]
+
+["Formatting ints or doubles can be parametrized by providing `:formatting-params` data map.
+
+There are following parameters for doubles
+
+* `:digits` - number of decimal digits, digits can be negative or positive, default: `-8`
+    * positive - decimal part will have exact number of digits (padded by zeros)
+    * negative - trailing zeros will be truncated
+* `:threshold` - precision to switch into scientific notation, default: `8`
+* `:na` - how to convert `nil`, default: `\"NA\"`
+* `:nan` - how to convert `##NaN`, default: `\"NaN\"`
+* `:inf` - how to convert `##Inf`, default: `\"∞\"`
+* `:-inf` - how to convert `##-Inf`, default: `\"-∞\"`"]
+
+(s/format (s/scale :linear {:formatter-params {:digits 4}}))
+
+["In case of integers, parameters are:
+
+* `:digits` - number of digits with padding with leading zeros, default: `0` (no leading zeros)
+* `:hex?` - print as hexadecimal number
+* `:na` - how to convert `nil`, default: `\"NA\"`"]
+
+(s/format (s/scale :quantize {:range [0 2 4 6 9 nil 11111]
+                              :formatter-params {:hex? true
+                                                 :digits 4}}))
 
 ["### Other"]
 

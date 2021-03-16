@@ -68,7 +68,7 @@ my-scale
 
 (ticks my-scale)
 ;; => (-1.0 -0.8 -0.6 -0.4 -0.2 -0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0)
-(fmt my-scale)
+(format my-scale)
 ;; => ("-1.0" "-0.8" "-0.6" "-0.4" "-0.2" "0.0" "0.2" "0.4" "0.6" "0.8" "1.0" "1.2" "1.4" "1.6" "1.8" "2.0")
 
 (def dt1 (java.time.LocalDateTime/of 2012 5 5 10 10 10))
@@ -95,7 +95,7 @@ dt-scale
 ;;     #object[java.time.LocalDateTime 0x441472d "2012-11-11T00:00"]
 ;;     #object[java.time.LocalDateTime 0x513dedf6 "2012-12-02T00:00"]]
 
-(fmt dt-scale)
+(format dt-scale)
 ;; => ("May-06" "May-27" "Jun-17" "Jul-08" "Jul-29" "Aug-19" "Sep-09" "Sep-30" "Oct-21" "Nov-11" "Dec-02")
 
 (def data (repeatedly 1000 #(+ (rand) (rand) (rand))))

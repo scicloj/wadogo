@@ -5,14 +5,14 @@
             [wadogo.utils :refer [build-seq interval-steps-before values->reversed-map]]
             [fastmath.stats :as stats]))
 
-(def ^:private quantize-params
+(def default-params
   {:domain [0.0 1.0]
    :range [0]})
 
 (defmethod scale :quantize
   ([_] (scale :quantize {}))
   ([_ params]
-   (let [params (merge quantize-params params)
+   (let [params (merge default-params params)
          [^long n r] (build-seq (:range params))
          rv (vec r)
          [mn mx] (stats/extent (:domain params))
@@ -24,7 +24,7 @@
                          :id id
                          :value (rv id)}) (partition 2 1 steps) (range n))
          forward (comp values step-fn)]
-     (->ScaleType :quantize [mn mx] rv (:ticks params) (:fmt params)
+     (->ScaleType :quantize [mn mx] rv (:ticks params) (:formatter params)
                   (fn local-forward
                     ([^double v interval?]
                      (let [res (forward v)]

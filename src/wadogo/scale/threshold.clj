@@ -1,10 +1,8 @@
 (ns wadogo.scale.threshold
-  (:require [fastmath.core :as m]
-
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]
+  (:require [wadogo.common :refer [scale ->ScaleType strip-keys]]
             [wadogo.utils :refer [build-seq interval-steps-before values->reversed-map]]))
 
-(def ^:private threshold-params
+(def default-params
   {:domain []
    :range [0]})
 
@@ -15,7 +13,7 @@
 (defmethod scale :threshold
   ([_] (scale :threshold {}))
   ([_ params]
-   (let [params (merge threshold-params params)
+   (let [params (merge default-params params)
          [^long n r] (build-seq (:range params))
          rv (vec r)
          steps (fix-domain (:domain params))
@@ -26,7 +24,7 @@
                          :id id
                          :value (rv id)}) (partition 2 1 steps) (range n))
          forward (comp values step-fn)]
-     (->ScaleType :threshold (:domain params) rv (:ticks params) (:fmt params)
+     (->ScaleType :threshold (:domain params) rv (:ticks params) (:formatter params)
                   (fn local-forward
                     ([^double v interval?]
                      (let [res (forward v)]

@@ -45,7 +45,7 @@
 
 ;;
 
-(def ^:private symlog-params
+(def default-params
   {:domain [0.0 1.0]
    :range [0.0 1.0]
    :base 10.0})
@@ -63,7 +63,7 @@
 (defmethod scale :symlog
   ([_] (scale :symlog {}))
   ([_ params]
-   (let [params (merge symlog-params params)
+   (let [params (merge default-params params)
          base (:base params)
          C (get params :C (/ (m/ln base)))
          [forward inverse] (base->forward-inverse base C)
@@ -71,7 +71,7 @@
          [rstart rend] (:range params)
          sls (forward dstart)
          sle (forward dend)]
-     (->ScaleType :symlog (:domain params) (:range params) (:ticks params) (:fmt params)
+     (->ScaleType :symlog (:domain params) (:range params) (:ticks params) (:formatter params)
                   (symlog-forward forward (m/make-norm sls sle rstart rend))
                   (symlog-inverse inverse (m/make-norm rstart rend sls sle))
                   (assoc (strip-keys params) :C C)))))

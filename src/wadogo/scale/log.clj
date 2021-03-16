@@ -1,7 +1,6 @@
 (ns wadogo.scale.log
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]
-            [fastmath.stats :as stats]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -33,7 +32,7 @@
          n? (neg? dstart)
          ls (m/log (if n? (- dstart) dstart))
          le (m/log (if n? (- dend) dend))]
-     (->ScaleType :log (:domain params) (:range params) (:ticks params) (:fmt params)
+     (->ScaleType :log (:domain params) (:range params) (:ticks params) (:formatter params)
                   (log-forward n? (m/make-norm ls le rstart rend))
                   (log-inverse n? (m/make-norm rstart rend ls le))
                   (strip-keys params)))))

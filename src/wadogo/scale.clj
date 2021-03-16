@@ -1,5 +1,5 @@
 (ns wadogo.scale
-  (:refer-clojure :exclude [range])
+  (:refer-clojure :exclude [range format])
   (:require [java-time :refer [duration]]
             [wadogo.common :as common]
 
@@ -34,9 +34,17 @@
 
 (defn ticks [^ScaleType scale] (common/ticks scale))
 
-(defn fmt [^ScaleType scale]
-  (let [tcks (ticks scale)]
-    (map (common/fmt scale tcks) tcks)))
+(defn format
+  ([scale]
+   (format scale (ticks scale)))
+  ([scale vs]
+   (map (common/formatter scale vs) vs)))
+
+(defn formatter
+  ([scale]
+   (formatter scale (ticks scale)))
+  ([scale vs]
+   (common/formatter scale vs)))
 
 (defn data
   ([^ScaleType scale]
@@ -55,8 +63,8 @@
    (common/scale (.kind scale) (assoc (common/scale->map scale) k v))))
 (defn with-ticks [^ScaleType scale ticks]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :ticks ticks)))
-(defn with-fmt [^ScaleType scale fmt]
-  (common/scale (.kind scale) (assoc (common/scale->map scale) :fmt fmt)))
+(defn with-formatter [^ScaleType scale fmt]
+  (common/scale (.kind scale) (assoc (common/scale->map scale) :formatter fmt)))
 
 (def mapping common/mapping)
 
@@ -100,7 +108,7 @@
 
   (ticks my-scale)
   ;; => (-1.0 -0.8 -0.6 -0.4 -0.2 -0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0)
-  (fmt my-scale)
+  (format my-scale)
   ;; => ("-1.0" "-0.8" "-0.6" "-0.4" "-0.2" "0.0" "0.2" "0.4" "0.6" "0.8" "1.0" "1.2" "1.4" "1.6" "1.8" "2.0")
 
   (def dt1 (java.time.LocalDateTime/of 2012 5 5 10 10 10))
@@ -127,7 +135,7 @@
   ;;     #object[java.time.LocalDateTime 0x441472d "2012-11-11T00:00"]
   ;;     #object[java.time.LocalDateTime 0x513dedf6 "2012-12-02T00:00"]]
 
-  (fmt dt-scale)
+  (format dt-scale)
   ;; => ("May-06" "May-27" "Jun-17" "Jul-08" "Jul-29" "Aug-19" "Sep-09" "Sep-30" "Oct-21" "Nov-11" "Dec-02")
 
   (def data (repeatedly 1000 #(+ (rand) (rand) (rand))))

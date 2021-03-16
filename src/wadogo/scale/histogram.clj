@@ -6,7 +6,7 @@
 
 ;; similar to threshold but splits by bins
 
-(def ^:private histogram-params
+(def default-params
   {:range :default})
 
 (defn- ->bins
@@ -21,7 +21,7 @@
   ([_] (scale :histogram {}))
   ([_ params]
    (assert (seq (:domain params)) "Domain can't be empty, please provide any data as a sequence of numbers")
-   (let [params (merge histogram-params params)
+   (let [params (merge default-params params)
          xs (m/seq->double-array (remove nil? (:domain params)))
          [n r] (->bins xs (:range params))
          rv (vec r)
@@ -34,7 +34,7 @@
                          :id id
                          :value (rv id)}) (partition 2 1 steps) (range n))
          forward (comp values step-fn)]
-     (->ScaleType :histogram xs rv (:ticks params) (:fmt params)
+     (->ScaleType :histogram xs rv (:ticks params) (:formatter params)
                   (fn local-forward
                     ([^double v interval?]
                      (let [res (forward v)]

@@ -7,7 +7,7 @@
   ([_ {:keys [domain range] :as params}]
    (let [nrange (ensure-seq-content range domain)
          ndomain (ensure-seq-content domain range)]
-     (->ScaleType :ordinal ndomain nrange (:ticks params) (:fmt params)
+     (->ScaleType :ordinal ndomain nrange (:ticks params) (:formatter params)
                   (zipmap ndomain nrange)
                   (zipmap nrange ndomain)
                   (strip-keys params)))))

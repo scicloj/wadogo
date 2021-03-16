@@ -74,6 +74,20 @@
            (m/pos-inf? (double x)) inf
            (m/neg-inf? (double x)) -inf
            
-           (zero? (double x)) (if e? (str "0." (str/join (repeat digits "0")) "E+00") "0.0")
+           (zero? (double x)) (let [zeros (str/join (repeat digits "0"))]
+                                (if e? (str "0." zeros "E+00") (str "0." zeros)))
            :else (format (str "%." digits (if e? "E" "f")) x)))
        na))))
+
+(defn int-formatter
+  ([] (int-formatter {}))
+  ([{:keys [^long digits na hex?]
+     :or {digits 0 na "NA" hex? false}}]
+   (let [pad (when (pos? digits) (str "0" digits))
+         suffix (if hex? "x" "d")
+         prefix (when hex? "0x")
+         f (str prefix "%" pad suffix)]
+     (fn [x] (if x (format f (int x)) na)))))
+
+
+((formatter {:digits 0}) 0.45)

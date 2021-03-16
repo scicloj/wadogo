@@ -36,7 +36,7 @@
         (let [[band-id {:keys [^double start ^double end]}] (first s)]
           (if (<= start v end) band-id (recur (next s))))))))
 
-(def ^:private bands-params
+(def default-params
   {:domain 1
    :range [0.0 1.0]
    :padding-in 0.0
@@ -46,7 +46,7 @@
 (defmethod scale :bands
   ([_] (scale :bands {}))
   ([_ params]
-   (let [params (merge bands-params params)
+   (let [params (merge default-params params)
 
          [^double rstart ^double rend] (:range params)
          rdiff (- rend rstart)
@@ -75,7 +75,7 @@
                 :point (norm (m/lerp lstart lend align))})
          forward (zipmap bands lst)]
      
-     (->ScaleType :bands bands (:range params) (:ticks params) (:fmt params)
+     (->ScaleType :bands bands (:range params) (:ticks params) (:formatter params)
                   (fn local-forward
                     ([v] (local-forward v true))
                     ([v interval?]

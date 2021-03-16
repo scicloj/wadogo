@@ -1,7 +1,6 @@
 (ns wadogo.scale.linear
-  (:require [wadogo.common :refer [scale ticks ->ScaleType strip-keys]]
-            [wadogo.utils :refer [make-norm]]
-            [fastmath.stats :as stats]))
+  (:require [wadogo.common :refer [scale ->ScaleType strip-keys]]
+            [wadogo.utils :refer [make-norm]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -16,7 +15,7 @@
    (let [params (merge default-params params)
          [dstart dend] (:domain params)
          [rstart rend] (:range params)]
-     (->ScaleType :linear (:domain params) (:range params) (:ticks params) (:fmt params)
+     (->ScaleType :linear (:domain params) (:range params) (:ticks params) (:formatter params)
                   (make-norm dstart dend rstart rend)
                   (make-norm rstart rend dstart dend)
                   (strip-keys params)))))
