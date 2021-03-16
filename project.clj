@@ -6,4 +6,4 @@
   :plugins [[lein-tools-deps "0.4.5"]]
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :lein-tools-deps/config {:config-files [:install :user :project]}
-  :profiles {:dev {:dependencies [[scicloj/notespace "3-beta4"]]}})
+  :profiles {:dev {:dependencies [[scicloj/notespace "3-beta5"]]}})
