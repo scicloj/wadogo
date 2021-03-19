@@ -56,6 +56,8 @@
   (common/scale (.kind scale) (assoc (common/scale->map scale) :domain domain)) )
 (defn with-range [^ScaleType scale range]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :range range)) )
+(defn with-kind [^ScaleType scale kind]
+  (common/scale kind (assoc (common/scale->map scale) :kind kind)))
 (defn with-data
   ([^ScaleType scale data]
    (common/scale (.kind scale) (merge (common/scale->map scale) data)))
@@ -65,6 +67,7 @@
   (common/scale (.kind scale) (assoc (common/scale->map scale) :ticks ticks)))
 (defn with-formatter [^ScaleType scale fmt]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :formatter fmt)))
+
 
 (def mapping common/mapping)
 
