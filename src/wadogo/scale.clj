@@ -75,7 +75,7 @@
   [data typ]
   (condp = typ
     :discrete (if (sequential? data) (count data) 1)
-    :continuous (- (last data) (first data))
+    :continuous (Math/abs (- (last data) (first data)))
     :datetime (duration (last data) (first data))
     nil))
 
