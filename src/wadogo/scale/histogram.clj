@@ -1,13 +1,11 @@
 (ns wadogo.scale.histogram
   (:require [fastmath.core :as m]
             [fastmath.stats :as stats]
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]
+            
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
             [wadogo.utils :refer [build-seq interval-steps-before values->reversed-map]]))
 
 ;; similar to threshold but splits by bins
-
-(def default-params
-  {:range :default})
 
 (defn- ->bins
   [xs r]
@@ -19,9 +17,9 @@
 
 (defmethod scale :histogram
   ([_] (scale :histogram {}))
-  ([_ params]
+  ([s params]
    (assert (seq (:domain params)) "Domain can't be empty, please provide any data as a sequence of numbers")
-   (let [params (merge default-params params)
+   (let [params (merge-params s params)
          xs (m/seq->double-array (remove nil? (:domain params)))
          [n r] (->bins xs (:range params))
          rv (vec r)

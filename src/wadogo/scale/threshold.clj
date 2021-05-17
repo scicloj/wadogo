@@ -1,19 +1,15 @@
 (ns wadogo.scale.threshold
-  (:require [wadogo.common :refer [scale ->ScaleType strip-keys]]
+  (:require [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
             [wadogo.utils :refer [build-seq interval-steps-before values->reversed-map]]))
-
-(def default-params
-  {:domain []
-   :range [0]})
 
 (defn- fix-domain
   [domain]
-  (conj (vec (conj (seq domain) ##-Inf)) ##Inf))
+  (-> domain seq (conj ##-Inf) vec (conj ##Inf)))
 
 (defmethod scale :threshold
   ([_] (scale :threshold {}))
-  ([_ params]
-   (let [params (merge default-params params)
+  ([s params]
+   (let [params (merge-params s params)
          [^long n r] (build-seq (:range params))
          rv (vec r)
          steps (fix-domain (:domain params))
@@ -32,3 +28,4 @@
                     ([^double v] (local-forward v false)))
                   (values->reversed-map values :value)
                   (strip-keys params)))))
+

@@ -1,7 +1,7 @@
 (ns wadogo.scale.pow
   (:require [fastmath.core :as m]
             
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -37,15 +37,10 @@
   (fn ^double [^double x]
     (pi (norm x))))
 
-(def default-params
-  {:domain [0.0 1.0]
-   :range [0.0 1.0]
-   :exponent 0.5})
-
 (defmethod scale :pow
   ([_] (scale :pow {}))
-  ([_ params]
-   (let [params (merge default-params params)
+  ([s params]
+   (let [params (merge-params s params)
          [dstart dend] (:domain params)
          [rstart rend] (:range params)
          [pf pi] (map symmetric (pow-pairs (:exponent params)))

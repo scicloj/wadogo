@@ -1,17 +1,13 @@
 (ns wadogo.scale.quantile
   (:require [fastmath.core :as m]
             [fastmath.stats :as stats]
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
             [wadogo.utils :refer [interval-steps-before values->reversed-map]]))
 
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
-
-(def default-params
-  {:range 4
-   :estimation-strategy :legacy})
 
 (defn- build-quantiles
   [r]
@@ -25,9 +21,9 @@
 
 (defmethod scale :quantile
   ([_] (scale :quantile {}))
-  ([_ params]
+  ([s params]
    (assert (seq (:domain params)) "Domain can't be empty, please provide any data as a sequence of numbers")
-   (let [params (merge default-params params)
+   (let [params (merge-params s params)
          xs (m/seq->double-array (remove nil? (:domain params)))
          [^double start ^double end] (stats/extent xs)
          r (:range params)

@@ -1,6 +1,8 @@
 (ns wadogo.common
   (:refer-clojure :exclude [range])
   (:require [fastmath.core :as m]
+
+            [wadogo.config :as config]
             
             [wadogo.ticks.linear :as tlinear]
             [wadogo.ticks.log :as tlog]
@@ -63,7 +65,7 @@
     (cond
       (= r :discrete) :discrete
       (= d :datetime) :datetime
-      (#{:band :log} kind) kind
+      (#{:bands :log} kind) kind
       :else :linear)))
 
 (defmulti ticks (fn [scale] (kind->dispatch scale)))
@@ -121,3 +123,9 @@
 (defmethod formatter :datetime [_ tcks] (fdatetime/time-format tcks))
 (defmethod formatter :ints [^ScaleType scale _] (fnumbers/int-formatter (:formatter-params (.data scale))))
 (defmethod formatter :doubles [^ScaleType scale _] (fnumbers/formatter (:formatter-params (.data scale))))
+
+;; params
+
+(defn merge-params
+  [scale-key params]
+  (merge (config/default-params scale-key) params))

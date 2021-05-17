@@ -1,7 +1,6 @@
 (ns usage
   (:require [notespace.api :as notespace]
-            [notespace.kinds :as k]
-            [wadogo.scale :as s]))
+            [notespace.kinds :as k]))
 
 ^k/hidden
 (comment 
@@ -20,7 +19,8 @@ You have an access to 13 different scales with unified api.
 
 ["The main entry point is by requiring `wadogo.scale` namespace."]
 
-(require '[wadogo.scale :as s])
+(require '[wadogo.scale :as s]
+         '[wadogo.config :as cfg])
 
 ["To illustrate functions we'll use the linear scale mapping `[0.0 1.0]` domain to `[-1.0 1.0]` range. To create any scale we use `scale` multimethod. Parameters are optional and there as some defaults for every scale kind."]
 
@@ -152,7 +152,7 @@ We have here:
 
 ["By default linear scale is an identity with arguments"]
 
-wadogo.scale.linear/default-params
+(cfg/default-params :linear)
 
 (s/scale :linear)
 
@@ -186,7 +186,7 @@ linear-scale
 
 ["#### Default"]
 
-wadogo.scale.log/default-params
+(cfg/default-params :log)
 
 (s/scale :log)
 

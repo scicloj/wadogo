@@ -2,7 +2,7 @@
   (:require [fastmath.core :as m]
             [java-time :as dt]
 
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
             [wadogo.utils :refer [datetime-diff-millis]]))
 
 (set! *warn-on-reflection* true)
@@ -42,14 +42,10 @@
            (dt/millis)
            (dt/plus start)))))
 
-(def ^:private datetime-params
-  {:domain [(dt/minus (dt/local-date-time) (dt/years 1)) (dt/local-date-time)]
-   :range [0.0 1.0]})
-
 (defmethod scale :datetime
   ([_] (scale :datetime {}))
-  ([_ params]
-   (let [params (merge datetime-params params)
+  ([s params]
+   (let [params (merge-params s params)
          [dstart dend] (:domain params)
          [rstart rend] (:range params)
          start (ld->ldt dstart)

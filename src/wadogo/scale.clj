@@ -22,54 +22,89 @@
 
 (set! *warn-on-reflection* true)
 
+(def ^{:doc "List of all possible scales"}
+  scale-kinds (-> common/scale methods keys sort))
+
 (defn scale
+  "Create a scale
+
+  List of all scale kinds is strored in `scale-kinds` var.
+
+  Possible attributes are (all scales have reasonable defaults, defined under `default-params` in every scale namespace):
+
+  * `:domain` - domain of the scale
+  * `:range` - range of the scale
+  * `:ticks` - number of ticks or list of ticks
+  * `:formatter` - formatting functions (convertion to string)"
   ([scale-kind] (common/scale scale-kind))
   ([scale-kind attributes] (common/scale scale-kind attributes)))
 
-(defn forward [scale v] (scale v))
-(defn inverse [^ScaleType scale v] ((.inverse-fn scale) v))
-(defn domain  [^ScaleType scale] (.domain scale))
-(defn range [^ScaleType scale] (.range scale))
-(defn kind [^ScaleType scale] (.kind scale))
+(defn forward "Apply scale" [scale v] (scale v))
+(defn inverse "Apply scale inverse" [^ScaleType scale v] ((.inverse-fn scale) v))
+(defn domain  "Return domain of the scale" [^ScaleType scale] (.domain scale))
+(defn range "Return range of the scale" [^ScaleType scale] (.range scale))
+(defn kind "Retrun kind of the scale" [^ScaleType scale] (.kind scale))
 
-(defn ticks [^ScaleType scale] (common/ticks scale))
+(defn ticks
+  "Return ticks which is list of chosen values of the scale, usually nicely distributed through the domain or range."
+  [^ScaleType scale] (common/ticks scale))
 
 (defn format
+  "Format list of scale values (taken from ticks or set by user). Returns sequence of strings."
   ([scale]
    (format scale (ticks scale)))
   ([scale vs]
    (map (common/formatter scale vs) vs)))
 
 (defn formatter
+  "Return formatter assigned to a scale."
   ([scale]
    (formatter scale (ticks scale)))
   ([scale vs]
    (common/formatter scale vs)))
 
 (defn data
+  "Get all attributes assigned to a scale."
   ([^ScaleType scale]
    (.data scale))
   ([^ScaleType scale key]
    (get (.data scale) key)))
 
-(defn with-domain [^ScaleType scale domain]
+(defn with-domain
+  "Modify a domain."
+  [^ScaleType scale domain]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :domain domain)) )
-(defn with-range [^ScaleType scale range]
+
+(defn with-range
+  "Modify a range."
+  [^ScaleType scale range]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :range range)) )
-(defn with-kind [^ScaleType scale kind]
+
+(defn with-kind
+  "Modify kind of the scale."
+  [^ScaleType scale kind]
   (common/scale kind (assoc (common/scale->map scale) :kind kind)))
+
 (defn with-data
+  "Assign additional data to a scale."
   ([^ScaleType scale data]
    (common/scale (.kind scale) (merge (common/scale->map scale) data)))
   ([^ScaleType scale k v]
    (common/scale (.kind scale) (assoc (common/scale->map scale) k v))))
-(defn with-ticks [^ScaleType scale ticks]
+
+(defn with-ticks
+  "Assign ticks or set nuumber of the ticks."
+  [^ScaleType scale ticks]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :ticks ticks)))
-(defn with-formatter [^ScaleType scale fmt]
+
+(defn with-formatter
+  "Assign custom formatter."
+  [^ScaleType scale fmt]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :formatter fmt)))
 
 
-(def mapping common/mapping)
+(def ^{:doc "The information about what is the type of the domain and range for every scale."}
+  mapping common/mapping)
 
 (defn- general-size
   [data typ]
@@ -80,6 +115,13 @@
     nil))
 
 (defn size
+  "Return span size of the domain or range (default).
+
+  Returns:
+
+  * count of the elements for `discrete` case
+  * interval span for `continuous` case
+  * duration for datetime case"
   ([scale] (size scale :range))
   ([scale range-or-domain]
    (let [[dtype rtype] (-> scale kind mapping)]
@@ -87,7 +129,9 @@
        (general-size (domain scale) dtype)
        (general-size (range scale) rtype)))))
 
-(defn extent [xs]
+(defn extent
+  "Return span of the sequence (helper function). Returns a pair of `min` and `max` value."
+  [xs]
   (let [[minx maxx] (stats/extent xs)]
     [minx maxx]))
 
@@ -155,3 +199,4 @@
   (inverse q-scale 0.5)
   ;; => {:dstart 1.148770652600275, :dend 1.4728260316971906, :value 0.5, :count 250, :quantile 0.5}
   )
+

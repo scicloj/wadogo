@@ -20,7 +20,7 @@
   Padding is calculated the same way as in `d3`. It's a proportion of the step."
   (:require [fastmath.core :as m]
 
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
             [wadogo.utils :refer [build-seq]]))
 
 (set! *warn-on-reflection* true)
@@ -36,17 +36,10 @@
         (let [[band-id {:keys [^double start ^double end]}] (first s)]
           (if (<= start v end) band-id (recur (next s))))))))
 
-(def default-params
-  {:domain 1
-   :range [0.0 1.0]
-   :padding-in 0.0
-   :padding-out 0.0
-   :align 0.5})
-
 (defmethod scale :bands
   ([_] (scale :bands {}))
-  ([_ params]
-   (let [params (merge default-params params)
+  ([s params]
+   (let [params (merge-params s params)
 
          [^double rstart ^double rend] (:range params)
          rdiff (- rend rstart)

@@ -1,6 +1,6 @@
 (ns wadogo.scale.log
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -18,15 +18,10 @@
     (fn ^double [^double v] (- (m/exp (norm v))))
     (fn ^double [^double v] (m/exp (norm v)))))
 
-(def default-params
-  {:domain [1.0 10.0]
-   :range [0.0 1.0]
-   :base 10.0})
-
 (defmethod scale :log
   ([_] (scale :log {}))
-  ([_ params]
-   (let [params (merge default-params params)
+  ([s params]
+   (let [params (merge-params s params)
          [^double dstart ^double dend] (:domain params)
          [rstart rend] (:range params)
          n? (neg? dstart)

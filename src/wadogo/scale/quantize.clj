@@ -1,18 +1,14 @@
 (ns wadogo.scale.quantize
   (:require [fastmath.core :as m]
 
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
             [wadogo.utils :refer [build-seq interval-steps-before values->reversed-map]]
             [fastmath.stats :as stats]))
 
-(def default-params
-  {:domain [0.0 1.0]
-   :range [0]})
-
 (defmethod scale :quantize
   ([_] (scale :quantize {}))
-  ([_ params]
-   (let [params (merge default-params params)
+  ([s params]
+   (let [params (merge-params s params)
          [^long n r] (build-seq (:range params))
          rv (vec r)
          [mn mx] (stats/extent (:domain params))

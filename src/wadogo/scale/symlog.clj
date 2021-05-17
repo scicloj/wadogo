@@ -2,7 +2,7 @@
 
 (ns wadogo.scale.symlog
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType strip-keys]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -45,11 +45,6 @@
 
 ;;
 
-(def default-params
-  {:domain [0.0 1.0]
-   :range [0.0 1.0]
-   :base 10.0})
-
 (defn- base->forward-inverse
   [^double base ^double C]
   (cond
@@ -62,8 +57,8 @@
 
 (defmethod scale :symlog
   ([_] (scale :symlog {}))
-  ([_ params]
-   (let [params (merge default-params params)
+  ([s params]
+   (let [params (merge-params s params)
          base (:base params)
          C (get params :C (/ (m/ln base)))
          [forward inverse] (base->forward-inverse base C)
