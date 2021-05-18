@@ -1,3 +1,5 @@
+[![Clojars Project](https://img.shields.io/clojars/v/org.scicloj/wadogo.svg)](https://clojars.org/org.scicloj/wadogo)
+
 # wadogo
 
 Scales for Clojure. Domain -> range transformations of various types. Derived from [`d3-scale`](https://github.com/d3/d3-scale), originally implemented for [`cljplot`](https://github.com/generateme/cljplot)
