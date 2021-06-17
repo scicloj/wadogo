@@ -85,7 +85,8 @@
 (defmethod ticks :linear [^ScaleType scale]
   (let [t (or (.ticks scale) 10)]
     (if-not (number? t) t
-            (let [[start end] (.domain scale)]
+            (let [start (first (.domain scale))
+                  end (last (.domain scale))]
               (tlinear/linear-ticks start end t)))))
 
 (defmethod ticks :log [^ScaleType scale]
@@ -129,3 +130,11 @@
 (defn merge-params
   [scale-key params]
   (merge (config/default-params scale-key) params))
+
+(defn log-params
+  [{:keys [domain base] :as params}]
+  (let [[x1 x2] domain]
+    (if (and base (not x2))
+      (assoc params :domain [(or x1 1.0) base])
+      params)))
+

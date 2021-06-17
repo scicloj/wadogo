@@ -1,11 +1,27 @@
 (ns usage
   (:require [notespace.api :as notespace]
-            [notespace.kinds :as k]))
+            [notespace.kinds :as k]
+            [wadogo.scale :as s]
+            [fastmath.core :as m]))
 
 ^k/hidden
-(comment 
+(comment
   (notespace/update-config #(assoc-in % [:by-ns *ns* :source-base-path] "notespace/")))
 
+^k/hidden
+(defn cont->cont
+  [scale]
+  (let [x1 (first (s/domain scale))
+        x2 (last (s/domain scale))]
+    [:p/vega {:mode "vega-lite"
+              :width 400
+              :height 200
+              :description "A simple bar chart with embedded data."
+              :data {:values (map (partial zipmap [:x :y]) (map #(vector % (scale %)) (m/slice-range x1 x2 50)))}
+              :mark {:type "line"
+                     :interpolate "monotone"} 
+              :encoding {:x {:field "x" :type "quantitative" :axis {:values (s/ticks scale)}}
+                         :y {:field "y" :type "quantitative"}}}]))
 
 ["# Wadogo scales"]
 
@@ -28,6 +44,9 @@ You have an access to 13 different scales with unified api.
                               :range [-1.0 1.0]}))
 
 linear
+
+^k/hiccup
+(cont->cont linear)
 
 ["### Fields"]
 
@@ -85,6 +104,9 @@ linear
 (s/ticks (s/scale :linear {:ticks 5}))
 
 (s/ticks (s/scale :linear {:ticks [0.2 0.5 0.9]}))
+
+^k/hiccup
+(cont->cont (s/scale :linear {:ticks [0.2 0.5 0.9]}))
 
 ["### Formatting"]
 
@@ -190,3 +212,31 @@ linear-scale
 
 (s/scale :log)
 
+^k/hiccup
+(cont->cont (s/scale :log {:base 2
+                           :domain [1 16]}))
+
+
+^k/hiccup
+(cont->cont (s/scale :symlog {:domain [-5 5]}))
+
+^k/hiccup
+(cont->cont (s/scale :pow))
+
+^k/hiccup
+(cont->cont (s/scale :pow {:exponent 2.0}))
+
+
+^k/hiccup
+(cont->cont (s/scale :interpolated {:domain [1 2 4 6 10]
+                                    :range [-7 0 2 4 10]}))
+
+^k/hiccup
+(cont->cont (s/scale :interpolated {:domain [1 2 4 6 10]
+                                    :range [-7 0 2 4 10]
+                                    :interpolator :monotone}))
+
+^k/hiccup
+(cont->cont (s/scale :interpolated {:domain [1 2 4 6 10]
+                                    :range [-7 0 2 4 10]
+                                    :interpolator :shepard}))
