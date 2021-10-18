@@ -15,8 +15,10 @@
     (if (every? (fn [v] (and (number? v)
                             (pos? ^double v)
                             (<= ^double v 1.0))) r)
-      [true r]
-      [false (rest (m/slice-range (inc (count r))))])
+      [true (if (< (double (last r)) 1.0) (conj (vec r) 1.0) r)] ;; ensure last element is always 1.0
+      (do
+        (println "Warning: quantiles out of range (0.0,1.0). Creating evenly spaced slices.")
+        [false (rest (m/slice-range (inc (count r))))]))
     [true (rest (m/slice-range (inc (long r))))]))
 
 (defmethod scale :quantile
@@ -28,7 +30,7 @@
          [^double start ^double end] (stats/extent xs)
          r (:range params)
          [quantiles? quantiles] (build-quantiles r)
-
+         
          steps (stats/quantiles xs quantiles (:estimation-strategy params))
          steps-corr (conj (seq steps) start)
          step-fn (interval-steps-before steps)
