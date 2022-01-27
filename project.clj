@@ -8,4 +8,5 @@
   :plugins [[lein-tools-deps "0.4.5"]]
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :lein-tools-deps/config {:config-files [:install :user :project]}
-  :profiles {:dev {:dependencies [[scicloj/notespace "3-beta6"]]}})
+  :profiles {:dev {:dependencies [[io.github.nextjournal/clerk "0.4.316"]
+                                  [org.clojure/test.check "1.1.1"]]}})

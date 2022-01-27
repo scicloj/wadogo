@@ -14,6 +14,10 @@ In progress:
 
 [documentation](https://scicloj.github.io/wadogo/usage/)
 
+### TODO
+
+* Switch to `clerk` documentation
+
 ## Scale types
 
 ### continuous -> continuous
@@ -47,9 +51,11 @@ In progress:
 
 Every scale generates list of ticks, discrete collection of uniformly distributed nice values which can be used as labels for any scale.
 
+
 Additionally you can build a formatting function to convert scale values to a string.
 
 ### Example session
+
 
 ```clojure
 (def my-scale (scale :linear {:domain [-1 2] :range [100 200]}))
@@ -129,3 +135,4 @@ Public License, v. 2.0 are satisfied: GNU General Public License as published by
 the Free Software Foundation, either version 2 of the License, or (at your
 option) any later version, with the GNU Classpath Exception which is available
 at https://www.gnu.org/software/classpath/license.html.
+

@@ -33,7 +33,7 @@
 (defn- right
   "Calculate maximum digits on the right side of the dot."
   ^long [^double x ^long digits]
-  (let [alpha (m/round (* x ^double (tbl (inc digits))))]
+  (let [alpha (double (m/round (* x ^double (tbl (inc digits)))))]
     (if (zero? alpha)
       1
       (find-nsig alpha digits))))
@@ -89,5 +89,3 @@
          f (str prefix "%" pad suffix)]
      (fn [x] (if x (format f (int x)) na)))))
 
-
-((formatter {:digits 0}) 0.45)
