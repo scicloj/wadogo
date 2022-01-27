@@ -6,7 +6,6 @@
 
 ;; *The `wadogo` name came up after trying to translate word `scale` into different languages using [google translate](https://translate.google.com/?sl=en&tl=sw&text=scale&op=translate). Swahili word was very pleasant and was choosen on `zulip` by a community. Funny enough is that `wadogo` doesn't mean `scale` at all but `small` or `little`. Translator failed here.* 
 
-
 ^{:nextjournal.clerk/visibility #{:hide-ns}}
 (ns usage
   (:require [nextjournal.clerk :as clerk]

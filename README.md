@@ -12,11 +12,11 @@ Scales for Clojure. Domain -> range transformations of various types. Derived fr
 
 In progress:
 
-[documentation](https://scicloj.github.io/wadogo/usage/)
+[documentation](https://scicloj.github.io/wadogo/#/notebooks/usage.clj)
 
 ### TODO
 
-* Switch to `clerk` documentation
+* create docs
 
 ## Scale types
 
