@@ -3,7 +3,7 @@
             [java-time :as dt]
 
             [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
-            [wadogo.utils :refer [datetime-diff-millis]]))
+            [wadogo.utils :refer [datetime-diff-millis ->extent]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -42,16 +42,22 @@
            (dt/millis)
            (dt/plus start)))))
 
+(defn- ->dt-extent
+  [input]
+  (if (map? input)
+    ((juxt :start :end) input)
+    [(reduce dt/min input) (reduce dt/max input)]))
+
 (defmethod scale :datetime
   ([_] (scale :datetime {}))
   ([s params]
    (let [params (merge-params s params)
-         [dstart dend] (:domain params)
-         [rstart rend] (:range params)
+         [dstart dend] (->dt-extent (:domain params))
+         [rstart rend] (->extent (:range params))
          start (ld->ldt dstart)
          end (ld->ldt dend)
          total (datetime-diff-millis start end)]
-     (->ScaleType :datetime [start end] (:range params) (:ticks params) (:fmt params)
+     (->ScaleType :datetime [start end] [rstart rend] (:ticks params) (:fmt params)
                   (datetime-forward start total rstart rend)
                   (datetime-inverse start total rstart rend)
                   (assoc (strip-keys params) :millis total)))))

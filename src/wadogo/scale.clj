@@ -39,15 +39,24 @@
   ([scale-kind] (common/scale scale-kind))
   ([scale-kind attributes] (common/scale scale-kind attributes)))
 
+(defn ->map
+  "Convert scale type to a map"
+  [scale]
+  (common/scale->map scale))
+
 (defn forward "Apply scale" [scale v] (scale v))
 (defn inverse "Apply scale inverse" [^ScaleType scale v] ((.inverse-fn scale) v))
 (defn domain  "Return domain of the scale" [^ScaleType scale] (.domain scale))
 (defn range "Return range of the scale" [^ScaleType scale] (.range scale))
 (defn kind "Retrun kind of the scale" [^ScaleType scale] (.kind scale))
 
+(declare with-ticks)
 (defn ticks
-  "Return ticks which is list of chosen values of the scale, usually nicely distributed through the domain or range."
-  [^ScaleType scale] (common/ticks scale))
+  "Return ticks which is list of chosen values of the scale, usually nicely distributed through the domain or range.
+
+  Number of ticks can be changed by providing `ticks` (optional argument)."
+  ([^ScaleType scale] (common/ticks scale))
+  ([^ScaleType scale proposed-ticks] (ticks (with-ticks scale proposed-ticks))))
 
 (defn format
   "Format list of scale values (taken from ticks or set by user). Returns sequence of strings."
@@ -89,8 +98,8 @@
   "Assign additional data to a scale."
   ([^ScaleType scale data]
    (common/scale (.kind scale) (merge (common/scale->map scale) data)))
-  ([^ScaleType scale k v]
-   (common/scale (.kind scale) (assoc (common/scale->map scale) k v))))
+  ([^ScaleType scale k v & kvs]
+   (common/scale (.kind scale) (apply assoc (common/scale->map scale) k v kvs))))
 
 (defn with-ticks
   "Assign ticks or set nuumber of the ticks."

@@ -1,7 +1,8 @@
 (ns wadogo.utils
   (:require [fastmath.interpolation :as i]
             [fastmath.core :as m]
-            [java-time :as dt])
+            [java-time :as dt]
+            [fastmath.stats :as stats])
   (:import [java.time LocalDateTime]))
 
 (set! *warn-on-reflection* true)
@@ -44,6 +45,15 @@
   (reduce (fn [curr m]
             (if (curr (m k)) curr
                 (assoc curr (m k) m))) {} values))
+
+;; domain/range parser
+
+(defn ->extent
+  [input]
+  (cond
+    (map? input) ((juxt :start :end) input)
+    (not= (count input) 2) (take 2 (stats/extent input))
+    :else input))
 
 ;; datetime
 

@@ -137,4 +137,3 @@
     (if (and base (not x2))
       (assoc params :domain [(or x1 1.0) base])
       params)))
-

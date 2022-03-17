@@ -1,3 +1,5 @@
-{:deps {org.clojure/clojure {:mvn/version "1.10.3"}
+{:deps {org.clojure/clojure {:mvn/version "1.11.0-rc1"}
         generateme/fastmath {:mvn/version "2.1.7-SNAPSHOT"}
-        clojure.java-time/clojure.java-time {:mvn/version "0.3.3"}}}
+        clojure.java-time/clojure.java-time {:mvn/version "0.3.2"}}
+ :aliases {:dev {:extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+                              io.github.nextjournal/clerk {:mvn/version "0.6.387"}}}}}

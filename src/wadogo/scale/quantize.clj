@@ -2,8 +2,7 @@
   (:require [fastmath.core :as m]
 
             [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
-            [wadogo.utils :refer [build-seq interval-steps-before values->reversed-map]]
-            [fastmath.stats :as stats]))
+            [wadogo.utils :refer [build-seq interval-steps-before values->reversed-map ->extent]]))
 
 (defmethod scale :quantize
   ([_] (scale :quantize {}))
@@ -11,7 +10,7 @@
    (let [params (merge-params s params)
          [^long n r] (build-seq (:range params))
          rv (vec r)
-         [mn mx] (stats/extent (:domain params))
+         [mn mx] (->extent (:domain params))
          steps (m/slice-range mn mx (inc n))
          step-fn (interval-steps-before (rest steps))
          values (mapv (fn [[x1 x2] id]

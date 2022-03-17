@@ -25,12 +25,14 @@
          rv (vec r)
          histogram (stats/histogram xs n)
          steps (conj (mapv first (:bins histogram)) (:max histogram))
+         counts (map second (:bins histogram))
          step-fn (interval-steps-before (rest steps))
-         values (mapv (fn [[x1 x2] id]
+         values (mapv (fn [[x1 x2] cnt id]
                         {:dstart x1
                          :dend x2
                          :id id
-                         :value (rv id)}) (partition 2 1 steps) (range n))
+                         :count cnt
+                         :value (rv id)}) (partition 2 1 steps) counts (range n))
          forward (comp values step-fn)]
      (->ScaleType :histogram xs rv (:ticks params) (:formatter params)
                   (fn local-forward

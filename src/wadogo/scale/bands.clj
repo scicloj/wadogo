@@ -21,7 +21,7 @@
   (:require [fastmath.core :as m]
 
             [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
-            [wadogo.utils :refer [build-seq]]))
+            [wadogo.utils :refer [build-seq ->extent]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -41,7 +41,7 @@
   ([s params]
    (let [params (merge-params s params)
 
-         [^double rstart ^double rend] (:range params)
+         [^double rstart ^double rend] (->extent (:range params))
          rdiff (- rend rstart)
          norm (m/make-norm 0.0 1.0 rstart rend)
 
@@ -52,9 +52,10 @@
          {:keys [^double padding-in ^double padding-out ^double align]} params
          padding-in (m/constrain ^double padding-in 0.0 1.0)
          align (m/constrain ^double align 0.0 1.0)
-         step (/ (+ (* bands-no (- 1.0 padding-in))
-                    (+ padding-out padding-out)
-                    (* (dec bands-no) padding-in)))
+         step (/ #_(+ (* bands-no (- 1.0 padding-in))
+                      (+ padding-out padding-out)
+                      (* (dec bands-no) padding-in))
+                 (+ bands-no (* 2.0 padding-out) (- padding-in)))
          nstart (* step padding-out)
          size (* step (- 1.0 padding-in))
          
@@ -68,13 +69,14 @@
                 :point (norm (m/lerp lstart lend align))})
          forward (zipmap bands lst)]
      
-     (->ScaleType :bands bands (:range params) (:ticks params) (:formatter params)
+     (->ScaleType :bands bands [rstart rend] (:ticks params) (:formatter params)
                   (fn local-forward
-                    ([v] (local-forward v true))
+                    ([v] (local-forward v false))
                     ([v interval?]
                      (let [res (forward v)]
                        (if interval? res (:point res)))))
                   (bands-inverse-fn  bands lst)
                   (assoc (strip-keys params)
                          :bandwidth (* rdiff (m/abs size))
-                         :step (* rdiff (m/abs step)))))))
+                         :step (* rdiff (m/abs step))
+                         :bands lst)))))

@@ -2,71 +2,72 @@
 
 (ns wadogo.scale.symlog
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params log-params]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params log-params]]
+            [wadogo.utils :refer [->extent]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 
-(defn- forward-e ^double [^double x] (* (m/sgn x) (m/log1p (m/abs x))))
-(defn- inverse-e ^double [^double y] (* (m/sgn y) (m/expm1 (m/abs y))))
+(defn- forward-e ^double [^double C ^double x] (* (m/sgn x) (m/log1p (m/abs (/ x C)))))
+(defn- inverse-e ^double [^double C ^double y] (* (m/sgn y) C (m/expm1 (m/abs y))))
 
-(def ^:private ^:const ^double c10 (/ (m/ln 10.0)))
-(defn- forward-10 ^double [^double x] (* (m/sgn x) (m/log10 (inc (m/abs (/ x c10))))))
-(defn- inverse-10 ^double [^double y] (* (m/sgn y) c10 (dec (m/pow 10.0 (m/abs y)))))
+(defn- forward-10 ^double [^double C ^double x] (* (m/sgn x) (m/log10 (inc (m/abs (/ x C))))))
+(defn- inverse-10 ^double [^double C ^double y] (* (m/sgn y) C (dec (m/pow 10.0 (m/abs y)))))
 
-(def ^:private ^:const ^double c2 (/ (m/ln 2.0)))
-(defn- forward-2 ^double [^double x] (* (m/sgn x) (m/log2 (inc (m/abs (/ x c2))))))
-(defn- inverse-2 ^double [^double y] (* (m/sgn y) c2 (dec (m/pow 2.0 (m/abs y)))))
+(defn- forward-2 ^double [^double C ^double x] (* (m/sgn x) (m/log2 (inc (m/abs (/ x C))))))
+(defn- inverse-2 ^double [^double C ^double y] (* (m/sgn y) C (dec (m/pow 2.0 (m/abs y)))))
 
 (defn- make-forward
-  ^double [^double base ^double C]
+  [^double base]
   (let [lbr (/ (m/log base))]
-    (fn ^double [^double x]
+    (fn ^double [^double C ^double x]
       (* (m/sgn x)
          (m/log (inc (m/abs (/ x C))))
          lbr))))
 
 (defn- make-inverse
-  ^double [^double base ^double C]
-  (fn ^double [^double y]
+  [^double base]
+  (fn ^double [^double C ^double y]
     (* (m/sgn y) C
        (dec (m/pow base (m/abs y))))))
 
 (defn- symlog-forward
-  [forward norm]
+  [^double C forward norm]
   (fn ^double [^double v]
-    (norm (forward v))))
+    (norm (forward C v))))
 
 (defn- symlog-inverse
-  [inverse norm]
+  [^double C inverse norm]
   (fn ^double [^double v]
-    (inverse (norm v))))
+    (inverse C (norm v))))
 
 ;;
 
+(defn- symlog-identity ^double [^double _C ^double v] v)
+
 (defn- base->forward-inverse
-  [^double base ^double C]
+  [^double base]
   (cond
     (== base 10.0) [forward-10 inverse-10]
     (== base m/E) [forward-e inverse-e]
     (== base 2.0) [forward-2 inverse-2]
-    (m/one? base) [identity identity]
-    :else [(make-forward base C)
-           (make-inverse base C)]))
+    (m/one? base) [symlog-identity symlog-identity]
+    :else [(make-forward base)
+           (make-inverse base)]))
 
 (defmethod scale :symlog
   ([_] (scale :symlog {}))
   ([s params]
    (let [params (merge-params s (log-params params))
          base (:base params)
-         C (get params :C (/ (m/ln base)))
-         [forward inverse] (base->forward-inverse base C)
-         [^double dstart ^double dend] (:domain params)
-         [rstart rend] (:range params)
-         sls (forward dstart)
-         sle (forward dend)]
-     (->ScaleType :symlog (:domain params) (:range params) (:ticks params) (:formatter params)
-                  (symlog-forward forward (m/make-norm sls sle rstart rend))
-                  (symlog-inverse inverse (m/make-norm rstart rend sls sle))
+         C (or (:C params) (/ (m/ln base)))
+         [forward inverse] (base->forward-inverse base)
+         [^double dstart ^double dend] (->extent (:domain params))
+         [rstart rend] (->extent (:range params))
+         sls (forward C dstart)
+         sle (forward C dend)]
+     (->ScaleType :symlog [dstart dend] [rstart rend] (:ticks params) (:formatter params)
+                  (symlog-forward C forward (m/make-norm sls sle rstart rend))
+                  (symlog-inverse C inverse (m/make-norm rstart rend sls sle))
                   (assoc (strip-keys params) :C C)))))

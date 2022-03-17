@@ -1,4 +1,4 @@
-(defproject org.scicloj/wadogo "0.1.0-SNAPSHOT"
+(defproject org.scicloj/wadogo "1.0.0-SNAPSHOT"
   :description "Scales for Clojure"
   :url "https://github.com/scicloj/wadogo"
   :scm {:name "git"
@@ -8,5 +8,4 @@
   :plugins [[lein-tools-deps "0.4.5"]]
   :middleware [lein-tools-deps.plugin/resolve-dependencies-with-deps-edn]
   :lein-tools-deps/config {:config-files [:install :user :project]}
-  :profiles {:dev {:dependencies [[io.github.nextjournal/clerk "0.4.316"]
-                                  [org.clojure/test.check "1.1.1"]]}})
+  :profiles {:dev {:lein-tools-deps/config {:resolve-aliases [:dev]}}})

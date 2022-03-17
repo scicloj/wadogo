@@ -1,7 +1,8 @@
 (ns wadogo.scale.pow
   (:require [fastmath.core :as m]
             
-            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
+            [wadogo.utils :refer [->extent]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -41,12 +42,12 @@
   ([_] (scale :pow {}))
   ([s params]
    (let [params (merge-params s params)
-         [dstart dend] (:domain params)
-         [rstart rend] (:range params)
+         [dstart dend] (->extent (:domain params))
+         [rstart rend] (->extent (:range params))
          [pf pi] (map symmetric (pow-pairs (:exponent params)))
          pstart (pf dstart)
          pend (pf dend)]
-     (->ScaleType :pow (:domain params) (:range params) (:ticks params) (:formatter params)
+     (->ScaleType :pow [dstart dend] [rstart rend] (:ticks params) (:formatter params)
                   (pow-forward pf (m/make-norm pstart pend rstart rend))
                   (pow-inverse pi (m/make-norm rstart rend pstart pend))
                   (strip-keys params)))))

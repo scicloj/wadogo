@@ -1,6 +1,7 @@
 (ns wadogo.scale.log
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params log-params]]))
+            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params log-params]]
+            [wadogo.utils :refer [->extent]]))
 
 (set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
@@ -22,12 +23,12 @@
   ([_] (scale :log {}))
   ([s params]
    (let [params (merge-params s (log-params params))
-         [^double dstart ^double dend] (:domain params)
-         [rstart rend] (:range params)
+         [^double dstart ^double dend] (->extent (:domain params))
+         [rstart rend] (->extent (:range params))
          n? (neg? dstart)
          ls (m/log (if n? (- dstart) dstart))
          le (m/log (if n? (- dend) dend))]
-     (->ScaleType :log (:domain params) (:range params) (:ticks params) (:formatter params)
+     (->ScaleType :log [dstart dend] [rstart rend] (:ticks params) (:formatter params)
                   (log-forward n? (m/make-norm ls le rstart rend))
                   (log-inverse n? (m/make-norm rstart rend ls le))
                   (strip-keys params)))))
