@@ -87,11 +87,11 @@
          [:symlog "continuous, numerical" "continuous, numerical" "logarithmic (symmetric), base=10.0"]
          [:pow "continuous, numerical" "continuous, numerical" "power, exponent=0.5"]
          [:interpolated "continuous, numerical, segmented" "continuous, numerical" "interpolated function, linear by default"]
-         [:quantize "continuous, numerical" "discrete, numerical or quantization data" "splits domain into evenly sized segments"]
+         [:quantize "continuous" "discrete, any or quantization data" "splits domain into evenly sized segments"]
          [:datetime "continuous, temporal" "continuous, numerical" "temporal"]
          [:histogram "data, numerical" "discrete, numerical or bin data" "splits data into bins"]
          [:quantile "data, numerical" "discrete, numerical or quantile data" "splits data into quantiles"]
-         [:threshold "data, numerical" "discrete, numerical or quantization data" "splits data into evenly sized segments"]
+         [:threshold "continuous, numerical" "discrete, any or segment data" "splits data into segments by given thresholds"]
          [:bands "discrete, any" "discrete, numerical or bin data" "assigns domain values into evenly sized segments"]
          [:ordinal "discrete, any" "discrete, any" "maps domain and range values"]
          [:constant "any" "any" "returns constant value"]]})
