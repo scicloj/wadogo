@@ -7,60 +7,62 @@
 ;; *The `wadogo` name came up after trying to translate word `scale` into different languages using [google translate](https://translate.google.com/?sl=en&tl=sw&text=scale&op=translate). Swahili word was very pleasant and was choosen on zulip chat by a community. Funny enough is that `wadogo` doesn't mean `scale` at all but `small` or `little`. Translator failed here.* 
 
 ^{:nextjournal.clerk/visibility :hide-ns
-  :nextjournal.clerk/no-cache true}
+  :nextjournal.clerk/no-cache true
+  :nextjournal.clerk/toc :collapsed}
 (ns index
   (:require [nextjournal.clerk :as clerk]
             [wadogo.scale :as s]
             [fastmath.core :as m]))
 
 ^{::clerk/visibility :fold ::clerk/viewer :hide-result}
-(do
-  (defn cont->cont
-    ([scale] (cont->cont scale {}))
-    ([scale {:keys [w h]
-             :or {w 400 h 200}}]
-     (let [x1 (first (s/domain scale))
-           x2 (last (s/domain scale))]
-       {:mode "vega-lite"
-        :width w
-        :height h
-        :data {:values (map (partial zipmap [:domain :range])
-                            (map #(vector % (scale %)) (m/slice-range x1 x2 80)))}
-        :mark "line" 
-        :encoding {:x {:field "domain" :type "quantitative" :axis {:values (s/format scale)}}
-                   :y {:field "range" :type "quantitative"}}})))
-  
-  (defn cont->discrete
-    [scale selector]
-    (let [y (s/range scale)
-          x (selector scale)]
-      {:mode "vega-lite"
-       :width 400 :height 200
-       :data {:values (map (fn [x y]
-                             {:y y :x1 (first x) :x2 (second x)}) x y)}
-       :mark "bar"
-       :encoding {:y {:field "y" :type "ordinal"}
-                  :x {:field "x1" :type "quantitative"}
-                  :x2 {:field "x2"}}}))
+(defn cont->cont
+  ([scale] (cont->cont scale {}))
+  ([scale {:keys [w h]
+           :or {w 400 h 200}}]
+   (let [x1 (first (s/domain scale))
+         x2 (last (s/domain scale))]
+     {:mode "vega-lite"
+      :width w
+      :height h
+      :data {:values (map (partial zipmap [:domain :range])
+                          (map #(vector % (scale %)) (m/slice-range x1 x2 80)))}
+      :mark "line" 
+      :encoding {:x {:field "domain" :type "quantitative" :axis {:values (s/format scale)}}
+                 :y {:field "range" :type "quantitative"}}})))
 
-  (defn bands-chart
-    [scales]
+^{::clerk/visibility :fold ::clerk/viewer :hide-result}
+(defn cont->discrete
+  [scale selector]
+  (let [y (s/range scale)
+        x (selector scale)]
     {:mode "vega-lite"
-     :width 500 :height 200
-     :data {:values (mapcat (fn [scale]
-                              (let [n (s/data scale :name)]
-                                (map #(assoc % :name n) (s/data scale :bands)))) scales)}
-     :encoding {:y {:field "name"
-                    :axis {:title nil}}
-                :x {:type "quantitative"
-                    :axis {:title nil}}}
-     :layer [{:mark "rule"
-              :encoding {:x {:field "rstart"}
-                         :x2 {:field "rend"}}}
-             {:mark {:type "circle"
-                     :stroke "green"
-                     :opacity 0.9}
-              :encoding {:x {:field "point"}}}]}))
+     :width 400 :height 200
+     :data {:values (map (fn [x y]
+                           {:y y :x1 (first x) :x2 (second x)}) x y)}
+     :mark "bar"
+     :encoding {:y {:field "y" :type "ordinal"}
+                :x {:field "x1" :type "quantitative"}
+                :x2 {:field "x2"}}}))
+
+^{::clerk/visibility :fold ::clerk/viewer :hide-result}
+(defn bands-chart
+  [scales]
+  {:mode "vega-lite"
+   :width 500 :height 200
+   :data {:values (mapcat (fn [scale]
+                            (let [n (s/data scale :name)]
+                              (map #(assoc % :name n) (s/data scale :bands)))) scales)}
+   :encoding {:y {:field "name"
+                  :axis {:title nil}}
+              :x {:type "quantitative"
+                  :axis {:title nil}}}
+   :layer [{:mark "rule"
+            :encoding {:x {:field "rstart"}
+                       :x2 {:field "rend"}}}
+           {:mark {:type "circle"
+                   :stroke "green"
+                   :opacity 0.9}
+            :encoding {:x {:field "point"}}}]})
 
 ^{::clerk/visibility :hide ::clerk/viewer :hide-result}
 (defmacro forms->result-table
@@ -642,8 +644,9 @@ s/mapping
   ::clerk/viewer :hide-result}
 (clerk/hide-result
  (comment
-   (clerk/serve! {:browse? false :watch-paths ["."]})
+   (clerk/serve! {:browse? false})
    (clerk/show! "index.clj")
    (clerk/build-static-app! {:paths ["index.clj"] :out-path "docs"})
    (clerk/clear-cache!)
+   (clerk/recompute!)
    (clerk/halt!)))

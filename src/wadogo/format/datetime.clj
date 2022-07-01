@@ -3,7 +3,6 @@
 
             [wadogo.utils :refer [dt-data step->duration datetime-diff-millis]]))
 
-(set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 
 (defn- same-properties?

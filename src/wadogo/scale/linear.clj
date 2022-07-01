@@ -2,7 +2,6 @@
   (:require [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
             [wadogo.utils :refer [make-norm ->extent]]))
 
-(set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 
 (defmethod scale :linear

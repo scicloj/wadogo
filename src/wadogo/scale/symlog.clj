@@ -5,7 +5,6 @@
             [wadogo.common :refer [scale ->ScaleType strip-keys merge-params log-params]]
             [wadogo.utils :refer [->extent]]))
 
-(set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 

@@ -5,7 +5,6 @@
             [fastmath.stats :as stats])
   (:import [java.time LocalDateTime]))
 
-(set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 
@@ -119,3 +118,4 @@
     (> step duration-minute) :minutes
     (> step duration-second) :seconds
     :else :millis))
+

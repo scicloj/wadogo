@@ -4,7 +4,6 @@
 
             [wadogo.utils :refer [step->duration dt-data]]))
 
-(set! *warn-on-reflection* true)
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 

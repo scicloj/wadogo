@@ -20,8 +20,6 @@
             [fastmath.stats :as stats])
   (:import [wadogo.common ScaleType]))
 
-(set! *warn-on-reflection* true)
-
 (def ^{:doc "List of all possible scales"}
   scale-kinds (-> common/scale methods keys sort))
 
