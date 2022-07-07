@@ -597,6 +597,12 @@ s/mapping
 
 ;; Intervals (bands) are created by slicing a range and shrinking them with padding parameters. `padding-out` controls outer gaps, `padding-in` controls gaps between bands. `align` controls position of the representative point inside a band. Values should be from `0.0` (no padding, left alignment) to `1.0` (full padding, right alignment).
 
+;; Align can be:
+
+;; * a number (from `0.0` to `1.0`)
+;; * `:spread` which spreads a point from left to right for each band consecutively.
+;; * a list of numbers
+
 (def bands-scale (s/scale :bands {:domain (range 5)
                                 :range [-5.0 5.0]}))
 
@@ -607,7 +613,9 @@ s/mapping
                (s/with-data bands-scale :name "padding: 0.8" :padding-out 0.8 :padding-in 0.8)
                (s/with-data bands-scale :name "padding: 0.1" :padding-out 0.1 :padding-in 0.1)
                (s/with-data bands-scale :name "align: 0.2, padding: 0.1" :padding-out 0.1 :padding-in 0.1 :align 0.2)
-               (s/with-data bands-scale :name "align: 0.8, padding: 0.1" :padding-out 0.1 :padding-in 0.1 :align 0.8)]))
+               (s/with-data bands-scale :name "align: 0.8, padding: 0.1" :padding-out 0.1 :padding-in 0.1 :align 0.8)
+               (s/with-data bands-scale :name "align: :spread, padding: 0.1" :padding-out 0.1 :padding-in 0.1 :align :spread)
+               (s/with-data bands-scale :name "align: [list], padding: 0.1" :padding-out 0.1 :padding-in 0.1 :align [0.2 0.8 0.5 0.1 0.9])]))
 
 ;; ## Ordinal (discrete -> discrete)
 

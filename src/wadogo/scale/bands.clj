@@ -35,6 +35,14 @@
         (let [[band-id {:keys [^double start ^double end]}] (first s)]
           (if (<= start v end) band-id (recur (next s))))))))
 
+(defn- decode-align
+  [align bands-no]
+  (cond
+    (number? align) (repeat bands-no (m/constrain ^double align 0.0 1.0))
+    (= :spread align) (m/slice-range bands-no)
+    (sequential? align) (take bands-no (cycle align))
+    :else (repeat bands-no 0.5)))
+
 (defmethod scale :bands
   ([_] (scale :bands {}))
   ([s params]
@@ -48,9 +56,9 @@
          [^long bands-no bands] (build-seq b)
          bands-no (int bands-no)
 
-         {:keys [^double padding-in ^double padding-out ^double align]} params
+         {:keys [^double padding-in ^double padding-out align]} params
          padding-in (m/constrain ^double padding-in 0.0 1.0)
-         align (m/constrain ^double align 0.0 1.0)
+         align (decode-align align bands-no)
          step (/ #_(+ (* bands-no (- 1.0 padding-in))
                       (+ padding-out padding-out)
                       (* (dec bands-no) padding-in))
@@ -58,14 +66,14 @@
          nstart (* step padding-out)
          size (* step (- 1.0 padding-in))
          
-         lst (for [^long i (range bands-no)
+         lst (for [[^long i ^double offset] (map vector (range bands-no) align)
                    :let [lstart (+ nstart (* i step))
                          lend (+ lstart size)
                          [lstart lend] (if (neg? step) [lend lstart] [lstart lend])]]
                {:value (nth bands i)
                 :rstart (norm lstart)
                 :rend (norm lend)
-                :point (norm (m/lerp lstart lend align))})
+                :point (norm (m/lerp lstart lend offset))})
          forward (zipmap bands lst)]
      
      (->ScaleType :bands bands [rstart rend] (:ticks params) (:formatter params)

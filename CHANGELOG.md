@@ -4,6 +4,10 @@
 
 library revision and `clerk` notebook documentation
 
+### Added
+
+* `bands` - `:align`accepts a list of values or `:spread` keyword
+
 ### Changed
 
 * `bands` scale returns a point by default (was: band info)
