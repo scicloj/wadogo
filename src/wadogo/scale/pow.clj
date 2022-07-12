@@ -2,7 +2,7 @@
   (:require [fastmath.core :as m]
             
             [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
-            [wadogo.utils :refer [->extent]]))
+            [wadogo.utils :refer [->extent build-forward build-inverse]]))
 
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
@@ -27,16 +27,6 @@
             [(fn ^double [^double x] (m/pow x exponent))
              (fn ^double [^double x] (m/pow x rexponent))])))
 
-(defn- pow-forward
-  [pf norm]
-  (fn ^double [^double x]
-    (norm (pf x))))
-
-(defn- pow-inverse
-  [pi norm]
-  (fn ^double [^double x]
-    (pi (norm x))))
-
 (defmethod scale :pow
   ([_] (scale :pow {}))
   ([s params]
@@ -47,6 +37,6 @@
          pstart (pf dstart)
          pend (pf dend)]
      (->ScaleType :pow [dstart dend] [rstart rend] (:ticks params) (:formatter params)
-                  (pow-forward pf (m/make-norm pstart pend rstart rend))
-                  (pow-inverse pi (m/make-norm rstart rend pstart pend))
+                  (build-forward pf (m/make-norm pstart pend rstart rend))
+                  (build-inverse pi (m/make-norm rstart rend pstart pend))
                   (strip-keys params)))))

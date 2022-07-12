@@ -119,3 +119,14 @@
     (> step duration-second) :seconds
     :else :millis))
 
+;;
+
+(defn build-forward
+  [forward norm]
+  (fn ^double [^double x]
+    (norm (forward x))))
+
+(defn build-inverse
+  [inverse norm]
+  (fn ^double [^double x]
+    (inverse (norm x))))

@@ -64,19 +64,6 @@
                    :opacity 0.9}
             :encoding {:x {:field "point"}}}]})
 
-^{::clerk/visibility :hide ::clerk/viewer :hide-result}
-(defmacro forms->result-table
-  ([rows] `(forms->result-table ["code" "result"] ~rows))
-  ([head rows]
-   `(clerk/table {:head ~head
-                  :rows [~@(map #(vec (conj (seq %) `(quote ~(first %)))) rows)]})))
-
-^{::clerk/visibility :hide ::clerk/viewer :hide-result}
-(defmacro ->table
-  [& forms]
-  `(clerk/table {:head ["results"] :rows [~@(map vector forms)]}))
-
-
 ;; ## Scales
 
 ;; The scale is a structure which helps to transform one set of values into another. There are many different ways of mapping between domain and range, collected in the table below.
@@ -99,6 +86,10 @@
          [:constant "any" "any" "returns constant value"]]})
 
 ;; Scale acts as a mathematical function with defined inverse in most cases. Additionally there is a selection of helper functions to access range, domain, representation values (ticks) and scale modifications.
+
+;; ### Custom scales
+
+;; Wadogo allows creation of custom continuous numerical scale from provided `forward` and `inverse` functions. See examples below.
 
 ;; ## Basics
 
@@ -133,11 +124,11 @@
 ;; * `data` - any data as a map, some scales store additional information there.
 
 ^{::clerk/visibility :hide}
-(forms->result-table
- [[(s/kind logarithmic)]
-  [(s/domain logarithmic)]
-  [(s/range logarithmic)]
-  [(s/data logarithmic)]])
+(clerk/example
+ (s/kind logarithmic)
+ (s/domain logarithmic)
+ (s/range logarithmic)
+ (s/data logarithmic))
 
 ;; We can also read particular key from `data` field.
 
@@ -148,29 +139,30 @@
 ;; To get information about size of the domain or range (default), call `size`.
 
 ^{::clerk/visibility :hide}
-(forms->result-table
- [[(s/size logarithmic :domain)]
-  [(s/size logarithmic :range)]
-  [(s/size logarithmic)]])
+(clerk/example
+ (s/size logarithmic :domain)
+ (s/size logarithmic :range)
+ (s/size logarithmic))
 
 ;; ### Updating scale
 
 ;; To change some of the fields while keeping the others you can call `with-` functions.
 
 ^{::clerk/visibility :hide}
-(forms->result-table
- [[(s/with-domain logarithmic [100.0 200.0])]
-  [(s/with-range logarithmic [99.0 -99.0])]
-  [(s/with-data logarithmic {:anything 11.0})]
-  [(s/with-data logarithmic :anything 11.0)]
-  [(s/with-data logarithmic :anything 11.0 :something 22)]
-  [(s/with-kind logarithmic :linear)]])
+(clerk/example
+ (s/with-domain logarithmic [100.0 200.0])
+ (s/with-range logarithmic [99.0 -99.0])
+ (s/with-data logarithmic {:anything 11.0})
+ (s/with-data logarithmic :anything 11.0)
+ (s/with-data logarithmic :anything 11.0 :something 22)
+ (s/with-kind logarithmic :linear))
 
 ;; ### Ticks
 
 ;; Every scale is able to produce `ticks`, ie. sequence of values which is taken from domain (or range in certain cases). User can also provide own ticks or expected number of ticks. The exact number of returned ticks can differ from expected number of ticks.
 
-(->table
+^{::clerk/visibility :hide}
+(clerk/example
  (s/ticks logarithmic)
  (s/ticks (s/with-ticks logarithmic 2))
  (s/ticks logarithmic 2) ;; same as above
@@ -187,7 +179,8 @@
 
 ;; Custom formatter can be provided by setting `formatter` key during scale creation.
 
-(->table
+^{::clerk/visibility :hide}
+(clerk/example
  (s/format logarithmic)
  (s/format (s/with-formatter logarithmic (comp str int)))
  ((s/formatter logarithmic) 33.343000001))
@@ -230,8 +223,8 @@
 
 (def minutes-scale (s/scale :datetime {:domain [(dt/local-time 12 1 0 0)
                                               (dt/local-time 12 15 0 0)]}))
-
-(->table
+^{::clerk/visibility :hide}
+(clerk/example
  (s/ticks years-scale) ;; ticks
  (s/format years-scale) ;; formatted ticks
  (s/ticks minutes-scale)
@@ -273,7 +266,7 @@ s/mapping
 
 (clerk/vl (cont->cont linear-scale))
 
-(->table
+(clerk/example
  (cfg/default-params :linear)                     ;; default domain and range
  (s/scale :linear)                                ;; default scale, identity
  (linear-scale 0.2)                               ;; forward scaling
@@ -292,7 +285,7 @@ s/mapping
 
 (clerk/vl (cont->cont linear-scale-data-domain))
 
-(->table
+(clerk/example
  (s/domain linear-scale-data-domain)       ;; domain from data
  (linear-scale-data-domain 0.2)            ;; forward scaling
  (s/inverse linear-scale-data-domain 0.2)  ;; inverse scaling
@@ -312,7 +305,7 @@ s/mapping
 
 (clerk/vl (cont->cont log-scale))
 
-(->table
+(clerk/example
  (cfg/default-params :log)                     ;; default domain and range
  (s/scale :log)                                ;; default scale
  (log-scale 0.2)                               ;; forward scaling
@@ -334,7 +327,7 @@ s/mapping
 
 (clerk/vl (cont->cont log-scale-base-2))
 
-(->table
+(clerk/example
  (log-scale-base-2 -16)            ;; forward scaling
  (s/inverse log-scale-base-2 50 )  ;; inverse scaling
  (s/ticks log-scale-base-2)        ;; default ticks
@@ -361,7 +354,7 @@ s/mapping
 
 (clerk/vl (cont->cont symmetric-log-scale))
 
-(->table
+(clerk/example
  (cfg/default-params :symlog)                     ;; default domain and range
  (s/scale :symlog)                                ;; default scale
  (symmetric-log-scale 0.2)                               ;; forward scaling
@@ -391,7 +384,7 @@ s/mapping
 
 (clerk/vl (cont->cont power-scale))
 
-(->table
+(clerk/example
  (cfg/default-params :pow)                     ;; default domain and range
  (s/scale :pow)                                ;; default scale
  (power-scale 0.2)                               ;; forward scaling
@@ -417,7 +410,7 @@ s/mapping
 
 (clerk/vl (cont->cont interpolated-scale))
 
-(->table
+(clerk/example
  (cfg/default-params :interpolated)                     ;; default domain and range
  (s/scale :interpolated)                                ;; default scale
  (interpolated-scale 0.2)                               ;; forward scaling
@@ -442,7 +435,7 @@ s/mapping
                                                (dt/zoned-date-time 2010 10 20 5)]
                                       :range [0 100]}))
 
-(->table
+(clerk/example
  (cfg/default-params :datetime)                     ;; default domain and range
  (s/scale :datetime)                                ;; default scale
  (datetime-scale (dt/zoned-date-time 2002 10 20 4)) ;; forward scaling
@@ -455,7 +448,7 @@ s/mapping
 (def time-scale (s/with-domain datetime-scale [(dt/local-time 12)
                                              (dt/local-time 13)]))
 
-(->table
+(clerk/example
  (time-scale (dt/local-time 12 13)) ;; forward scaling
  (s/inverse time-scale 0.2)         ;; inverse scaling
  (s/ticks time-scale)               ;; default ticks
@@ -495,7 +488,7 @@ s/mapping
 
 (clerk/vl (cont->discrete histogram-scale bin-intervals))
 
-(->table
+(clerk/example
  (s/range histogram-scale)            ;; calculated range, bins
  (s/domain histogram-scale)           ;; original data, here as java array
  (histogram-scale 0.5)                ;; returns bin id
@@ -527,7 +520,7 @@ s/mapping
 
 (clerk/vl (cont->discrete quantize-scale quantize-intervals))
 
-(->table
+(clerk/example
  (s/range quantize-scale)            ;; range, bin names
  (s/domain quantize-scale)           ;; interval (from data)
  (quantize-scale 0.5)                ;; returns bin name
@@ -545,7 +538,7 @@ s/mapping
 (def threshold-scale (s/scale :threshold {:domain [0 1 4 5 9]
                                         :range [:a :b :c "fourth" 5 ::last]}))
 
-(->table
+(clerk/example
  (s/range threshold-scale)            ;; range, interval names
  (s/domain threshold-scale)           ;; interval start/end points
  (threshold-scale 4.5)                ;; returns interval name
@@ -573,7 +566,7 @@ s/mapping
 
 (clerk/vl (cont->discrete quantile-scale quantile-intervals))
 
-(->table
+(clerk/example
  (s/range quantile-scale)            ;; calculated range, bins
  (s/domain quantile-scale)           ;; original data, here as java array
  (quantile-scale 0.5)                ;; returns bin id
@@ -634,13 +627,132 @@ s/mapping
 
 (def constant-scale (s/scale :constant {:domain "any domain value"
                                       :range :any-range-value}))
-
-(->table
+^{::clerk/visibility :hide}
+(clerk/example
  (s/range constant-scale)
  (s/domain constant-scale)
  (constant-scale :in)           ;; always returns range
  (s/inverse constant-scale 0)   ;; always returns domain
  )
+
+;; ## Custom scales
+
+;; Creation of custom continuous numerical scale can be done with `defcustom` function. `forward` and `inverse` functions should be provided as parameters (along with a scale name).
+
+;; Let's create some scales based on [ggplot2 transformations](https://ggplot2-book.org/scale-position.html#scale-transformation) and [Sigmoid wiki](https://en.wikipedia.org/wiki/Sigmoid_function)
+
+;; ### asn
+
+(s/defcustom :asn #(m/atanh %) #(m/tanh %))
+
+(def asn-scale (s/scale :asn {:domain [-0.99 0.99]
+                            :range [0.0 1.0]}))
+
+(clerk/vl (cont->cont asn-scale))
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (asn-scale 0.2)
+ (s/inverse asn-scale 0.5383))
+
+;; ### logit
+
+(s/defcustom :logit m/logit m/sigmoid)
+
+(def logit-scale (s/scale :logit {:domain [0.1 0.9]
+                                :range [0.0 1.0]}))
+
+(clerk/vl (cont->cont logit-scale))
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (logit-scale 0.2)
+ (s/inverse logit-scale 0.1845))
+
+;; ### probit
+
+(require '[fastmath.random :as rnd])
+
+(s/defcustom :probit #(rnd/cdf rnd/default-normal %) #(rnd/icdf rnd/default-normal %))
+
+(def probit-scale (s/scale :probit {:domain [-5.0 5.0]
+                                  :range [0.0 1.0]}))
+
+(clerk/vl (cont->cont probit-scale))
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (probit-scale 0.2)
+ (s/inverse probit-scale 0.5793))
+
+;; ### reciprocal
+
+(s/defcustom :reciprocal #(/ %) #(/ %))
+
+(def reciprocal-scale (s/scale :reciprocal {:domain [0.1 5.0]
+                                          :range [0.0 1.0]}))
+
+(clerk/vl (cont->cont reciprocal-scale))
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (reciprocal-scale 0.2)
+ (s/inverse reciprocal-scale 0.510204))
+
+;; ### Gudermannian
+
+(s/defcustom :gudermannian
+  #(* 2.0 (m/atan (m/tanh (* 0.5 %))))
+  #(* 2.0 (m/atanh (m/tan (* 0.5 %)))))
+
+(def gudermannian-scale (s/scale :gudermannian {:domain [-2.0 2.0]
+                                              :range [0.0 1.0]}))
+
+(clerk/vl (cont->cont gudermannian-scale))
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (gudermannian-scale 0.2)
+ (s/inverse gudermannian-scale 0.5763))
+
+;; ### Algebraic
+
+(s/defcustom :algebraic
+  #(/ % (m/sqrt (inc (* % %))))
+  #(/ % (m/sqrt (- 1.0 (* % %)))))
+
+(def algebraic-scale (s/scale :algebraic {:domain [-2.0 2.0]
+                                        :range [0.0 1.0]}))
+
+(clerk/vl (cont->cont algebraic-scale))
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (algebraic-scale 0.2)
+ (s/inverse algebraic-scale 0.6096))
+
+;; ### Distribution
+
+;; You can also make scale from any probability distribution based on `cdf` and `icdf` functions.
+
+(require '[fastmath.random :as rng])
+
+(def pascal-distribution (rng/distribution :pascal {:p 0.3 :r 10}))
+
+(s/defcustom :pascal
+  (partial rng/cdf pascal-distribution)
+  (partial rng/icdf pascal-distribution))
+
+(def pascal-scale (s/scale :pascal {:domain [0.0 20.0]
+                                  :range [0.0 1.0]}))
+
+(clerk/vl (cont->cont pascal-scale))
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (pascal-scale 10.0)
+ (s/inverse pascal-scale 0.1166))
+
 
 ;; ## Source code
 

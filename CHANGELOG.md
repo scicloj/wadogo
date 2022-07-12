@@ -7,6 +7,7 @@ library revision and `clerk` notebook documentation
 ### Added
 
 * `bands` - `:align`accepts a list of values or `:spread` keyword
+* `defcustom` - custom scales based on `forward` and `inverse`
 
 ### Changed
 

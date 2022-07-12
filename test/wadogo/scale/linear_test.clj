@@ -40,9 +40,9 @@
       (is (:pass? (tc/quick-check
                    100
                    (prop/for-all* [(gen/double* {:min 0.0 :max 100.0 :infinite? false :NaN? false})]
-                                  (fn [n] (and (m/approx-eq (l n) (* 2.0 n))
-                                              (m/approx-eq (s/forward l n) (* 2.0 n))
-                                              (m/approx-eq (s/inverse l n) (* 0.5 n)))))))))))
+                                  (fn [n] (and (m/approx-eq (l n) (* 2.0 n) 6)
+                                              (m/approx-eq (s/forward l n) (* 2.0 n) 6)
+                                              (m/approx-eq (s/inverse l n) (* 0.5 n) 6))))))))))
 
 (deftest zero-length-domain-or-range
   (let [l (s/scale :linear {:domain [0 0]})]

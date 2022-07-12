@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [range format])
   (:require [java-time :refer [duration]]
             [wadogo.common :as common]
-
+            [wadogo.utils :refer [->extent build-forward build-inverse]]
+            
             [wadogo.scale.linear]
             [wadogo.scale.interpolated]
             [wadogo.scale.log]
@@ -17,7 +18,8 @@
             [wadogo.scale.datetime]
             [wadogo.scale.constant]
             
-            [fastmath.stats :as stats])
+            [fastmath.stats :as stats]
+            [fastmath.core :as m])
   (:import [wadogo.common ScaleType]))
 
 (def ^{:doc "List of all possible scales"}
@@ -141,6 +143,26 @@
   [xs]
   (let [[minx maxx] (stats/extent xs)]
     [minx maxx]))
+
+(defmacro defcustom
+  "Create custom continuous numerical scale with given `forward` and `inverse` functions."
+  [scale-name forward inverse]
+  `(defmethod common/scale ~scale-name
+     ([~'_] (common/scale ~scale-name {}))
+     ([~'_ ~'params]
+      (let [params# (merge {:domain [m/EPSILON 1.0]
+                            :range [m/EPSILON 1.0]} ~'params)
+            [dstart# dend# :as d#] (->extent (:domain params#))
+            [rstart# rend# :as r#] (->extent (:range params#))
+            start# (~forward dstart#)
+            end# (~forward dend#)
+            fnorm# (m/make-norm start# end# rstart# rend#)
+            inorm# (m/make-norm rstart# rend# start# end#)]
+        (common/->ScaleType ~scale-name d# r# (:ticks params#) (:formatter params#)
+                            (build-forward ~forward fnorm#)
+                            (build-inverse ~inverse inorm#)
+                            (common/strip-keys params#))))))
+
 
 (comment
 
