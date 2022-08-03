@@ -8,6 +8,7 @@ library revision and `clerk` notebook documentation
 
 * `bands` - `:align`accepts a list of values or `:spread` keyword
 * `defcustom` - custom scales based on `forward` and `inverse`
+* `update-range` and `update-domain` helpers
 
 ### Changed
 
@@ -15,6 +16,10 @@ library revision and `clerk` notebook documentation
 * numerical scales can accept data (extent is calculated then)
 * `warn-on-reflection` removed
 * `smile-mkl` dependency is removed to allow lighter uberjar
+
+### Fixed
+
+* inconsistency in `ticks` and `formatter` processing for some kinds (ordinal, continuous)
 
 ## [0.1.0-SNAPSHOT]
 

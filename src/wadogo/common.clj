@@ -62,15 +62,19 @@
   [^ScaleType scale]
   (let [kind (.kind scale)
         [d r] (mapping kind)]
-    (cond
-      (= r :discrete) :discrete
-      (= d :datetime) :datetime
-      (#{:bands :log} kind) kind
-      :else :linear)))
+    (if (and d r)
+      (cond
+        (= :log kind) :log
+        (and (= d :continuous)
+             (= r :discrete)) :discrete
+        (= d :discrete) :ordinal
+        (= d :datetime) :datetime
+        :else :linear)
+      kind)))
 
 (defmulti ticks (fn [scale] (kind->dispatch scale)))
 
-(defn- discrete->ticks
+(defn discrete->ticks
   [tcks data]
   (let [t (or tcks data)]
     (if-not (number? t) t
@@ -79,7 +83,7 @@
 (defmethod ticks :discrete [^ScaleType scale]
   (discrete->ticks (.ticks scale) (.range scale)))
 
-(defmethod ticks :bands [^ScaleType scale]
+(defmethod ticks :ordinal [^ScaleType scale]
   (discrete->ticks (.ticks scale) (.domain scale)))
 
 (defmethod ticks :linear [^ScaleType scale]
@@ -111,9 +115,9 @@
         stcks (remove nil? tcks)]
     (cond
       (fn? formatter) :fn
-      (= kind :bands) :default
       (= d :datetime) :datetime
-      (some #(or (double? %) (float? %)) tcks) :doubles
+      (and (every? number? stcks)
+           (some #(or (double? %) (float? %)) tcks)) :doubles
       (and stcks (every? int? stcks)) :ints
       :else :default)))
 

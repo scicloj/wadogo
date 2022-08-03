@@ -84,10 +84,20 @@
   [^ScaleType scale domain]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :domain domain)) )
 
+(defn update-domain
+  "Modify a domain by a function."
+  [^ScaleType scale f]
+  (common/scale (.kind scale) (assoc (common/scale->map scale) :domain (f (.domain scale)))))
+
 (defn with-range
   "Modify a range."
   [^ScaleType scale range]
   (common/scale (.kind scale) (assoc (common/scale->map scale) :range range)) )
+
+(defn update-range
+  "Modify a range by a function."
+  [^ScaleType scale f]
+  (common/scale (.kind scale) (assoc (common/scale->map scale) :range (f (.range scale)))) )
 
 (defn with-kind
   "Modify kind of the scale."
