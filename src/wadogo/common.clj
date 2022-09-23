@@ -9,7 +9,8 @@
             [wadogo.ticks.datetime :as tdatetime]
 
             [wadogo.format.numbers :as fnumbers]
-            [wadogo.format.datetime :as fdatetime])
+            [wadogo.format.datetime :as fdatetime]
+            [wadogo.format.ranges :as franges])
   (:import [clojure.lang IFn]))
 
 (def ^:private mappings {:c->c [:continuous :continuous]
@@ -116,6 +117,8 @@
     (cond
       (fn? formatter) :fn
       (= d :datetime) :datetime
+      (every? #(and (sequential? %)
+                    (= 2 (count %))) stcks) :ranges
       (and (every? number? stcks)
            (some #(or (double? %) (float? %)) tcks)) :doubles
       (and stcks (every? int? stcks)) :ints
@@ -128,6 +131,7 @@
 (defmethod formatter :datetime [_ tcks] (fdatetime/time-format tcks))
 (defmethod formatter :ints [^ScaleType scale _] (fnumbers/int-formatter (:formatter-params (.data scale))))
 (defmethod formatter :doubles [^ScaleType scale _] (fnumbers/formatter (:formatter-params (.data scale))))
+(defmethod formatter :ranges [^ScaleType scale _] (franges/range-formatter {:formatter-params (.data scale)}))
 
 ;; params
 

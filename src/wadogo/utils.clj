@@ -35,9 +35,14 @@
 
 (defn build-seq
   [count-or-seq]
-  (if (sequential? count-or-seq)
-    [(count count-or-seq) count-or-seq]
-    [count-or-seq (range count-or-seq)]))
+  (cond
+    (sequential? count-or-seq) [(count count-or-seq) count-or-seq]
+    (number? count-or-seq) [count-or-seq (range count-or-seq)]
+    :else nil))
+
+(defn append-infs
+  [domain]
+  (-> domain seq (conj ##-Inf) vec (conj ##Inf)))
 
 (defn values->reversed-map
   [values k]

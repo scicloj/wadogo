@@ -226,10 +226,13 @@
 
   (def data (repeatedly 1000 #(+ (rand) (rand) (rand))))
 
+  (extent data)
+  ;; => [0.17965413994792245 2.7460020103629614]
+
   (def q-scale (scale :quantile {:domain data}))
   q-scale
   ;; => #object[wadogo.common.ScaleType 0x1b72a45c "quantile: [D@68405751 -> (0.25 0.5 0.75 1.0) {:estimation-strategy :legacy, :quantiles ([1.148770652600275 0.25] [1.4728260316971906 0.5] [1.8287836732494889 0.75])}"]
-
+  
   (map q-scale (clojure.core/range 0.0 3.0 0.25))
   ;; => (nil 0.25 0.25 0.25 0.25 0.5 0.75 0.75 1.0 1.0 1.0 1.0)
 
@@ -237,5 +240,8 @@
   ;; => {:dstart 1.8287836732494889, :dend 2.934651568076644, :value 1.0, :count 250, :quantile 1.0}
   (inverse q-scale 0.5)
   ;; => {:dstart 1.148770652600275, :dend 1.4728260316971906, :value 0.5, :count 250, :quantile 0.5}
-  )
 
+  (def t-scale (scale :threshold {:domain [0.2 10 11] :range [1 2 3 4]}))
+
+  (forward t-scale 0.2)
+  )
