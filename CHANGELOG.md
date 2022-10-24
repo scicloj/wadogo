@@ -16,6 +16,7 @@ library revision and `clerk` notebook documentation
 * numerical scales can accept data (extent is calculated then)
 * `warn-on-reflection` removed
 * `smile-mkl` dependency is removed to allow lighter uberjar
+* `ordinal` scale sorts (on option) and makes domain distinct by default
 
 ### Fixed
 

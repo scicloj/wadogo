@@ -11,7 +11,7 @@
 (defn ensure-seq-content
   "If `a` is empty and we have something in `b` - create seq of consecutive numbers."
   [a b]
-  (vec (if (and (not a) b)
+  (vec (if (and (not (seq a)) (seq b))
          (clojure.core/range (count b))
          a)))
 

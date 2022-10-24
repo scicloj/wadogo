@@ -75,11 +75,22 @@
 
 (defmulti ticks (fn [scale] (kind->dispatch scale)))
 
+(defn linear-ticks
+  [lticks ldomain]
+  (let [t (or lticks 10)]
+    (if-not (number? t) t
+            (let [start (first ldomain)
+                  end (last ldomain)]
+              (tlinear/linear-ticks start end t)))))
+
 (defn discrete->ticks
   [tcks data]
   (let [t (or tcks data)]
     (if-not (number? t) t
             (take-nth (max 1 (m/round (/ (count data) (double t)))) data))))
+
+(defmethod ticks :default [^ScaleType scale]
+  (linear-ticks (.ticks scale) (.domain scale)))
 
 (defmethod ticks :discrete [^ScaleType scale]
   (discrete->ticks (.ticks scale) (.range scale)))
@@ -88,11 +99,7 @@
   (discrete->ticks (.ticks scale) (.domain scale)))
 
 (defmethod ticks :linear [^ScaleType scale]
-  (let [t (or (.ticks scale) 10)]
-    (if-not (number? t) t
-            (let [start (first (.domain scale))
-                  end (last (.domain scale))]
-              (tlinear/linear-ticks start end t)))))
+  (linear-ticks (.ticks scale) (.domain scale)))
 
 (defmethod ticks :log [^ScaleType scale]
   (let [t (or (.ticks scale) -1)]

@@ -762,11 +762,10 @@ s/mapping
 
 ^{::clerk/visibility :hide
   ::clerk/viewer :hide-result}
-(clerk/hide-result
- (comment
-   (clerk/serve! {:browse? false})
-   (clerk/show! "index.clj")
-   (clerk/build-static-app! {:paths ["index.clj"] :out-path "docs"})
-   (clerk/clear-cache!)
-   (clerk/recompute!)
-   (clerk/halt!)))
+(comment
+  (clerk/serve! {:browse? false})
+  (clerk/show! "index.clj")
+  (clerk/build! {:paths ["index.clj"] :out-path "docs"})
+  (clerk/clear-cache!)
+  (clerk/recompute!)
+  (clerk/halt!))

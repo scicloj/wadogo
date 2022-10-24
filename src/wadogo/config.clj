@@ -30,4 +30,5 @@
    :symlog {:domain [0.0 1.0]
             :range [0.0 1.0]
             :base 10.0}
-   :threshold {:domain []}})
+   :threshold {:domain []}
+   :ordinal {:sort? true}})
