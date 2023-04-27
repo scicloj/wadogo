@@ -115,7 +115,7 @@ q-scale
 
 ## License
 
-Copyright © 2021-2022 Scicloj / GenerateMe
+Copyright © 2021-2023 Scicloj / GenerateMe
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
