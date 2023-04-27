@@ -1,5 +1,5 @@
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        generateme/fastmath {:mvn/version "2.1.9-SNAPSHOT" :exclusions [com.github.haifengl/smile-mkl]}
-        clojure.java-time/clojure.java-time {:mvn/version "1.1.0"}}
+        generateme/fastmath {:mvn/version "2.2.0" :exclusions [com.github.haifengl/smile-mkl]}
+        clojure.java-time/clojure.java-time {:mvn/version "1.2.0"}}
  :aliases {:dev {:extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
-                              io.github.nextjournal/clerk {:mvn/version "0.11.603"}}}}}
+                              io.github.nextjournal/clerk {:mvn/version "0.13.842"}}}}}

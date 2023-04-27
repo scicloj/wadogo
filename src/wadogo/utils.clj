@@ -69,12 +69,12 @@
         nanos (.divide (BigDecimal. ^long (dt/value (dt/property dur :nanos))) 1000000.0M)]
     (.add nanos (.multiply seconds 1000.0M))))
 
-(def ^:private ^:const ^long duration-second 1000)
-(def ^:private ^:const ^long duration-minute (* duration-second 60))
-(def ^:private ^:const ^long duration-hour (* duration-minute 60))
-(def ^:private ^:const ^long duration-day (* duration-hour 24))
-(def ^:private ^:const ^long duration-month (* duration-day 30))
-(def ^:private ^:const ^long duration-year (* duration-day 365))
+(def ^:private ^:const duration-second 1000)
+(def ^:private ^:const duration-minute (* duration-second 60))
+(def ^:private ^:const duration-hour (* duration-minute 60))
+(def ^:private ^:const duration-day (* duration-hour 24))
+(def ^:private ^:const duration-month (* duration-day 30))
+(def ^:private ^:const duration-year (* duration-day 365))
 
 ;; date time data set
 (def dt-data

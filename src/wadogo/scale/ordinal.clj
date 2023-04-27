@@ -9,7 +9,10 @@
          ndomain (as-> domain domain
                    (distinct domain)
                    (ensure-seq-content domain range)
-                   (if sort? (sort domain) domain))
+                   (cond
+                     (fn? sort?) (sort sort? domain)
+                     sort? (sort domain)
+                     :else domain))
          nrange (ensure-seq-content range ndomain)]
      (->ScaleType :ordinal ndomain nrange (:ticks params) (:formatter params)
                   (zipmap ndomain nrange)

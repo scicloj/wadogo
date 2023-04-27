@@ -1,8 +1,8 @@
 # Change Log
 
-## [1.0.0-SNAPSHOT]
+## [1.0.0]
 
-library revision and `clerk` notebook documentation
+Library revision and `clerk` notebook documentation
 
 ### Added
 
@@ -16,7 +16,7 @@ library revision and `clerk` notebook documentation
 * numerical scales can accept data (extent is calculated then)
 * `warn-on-reflection` removed
 * `smile-mkl` dependency is removed to allow lighter uberjar
-* `ordinal` scale sorts (on option) and makes domain distinct by default
+* `ordinal` scale sorts (an option) and makes domain distinct by default, comparator can be provided
 
 ### Fixed
 

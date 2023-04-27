@@ -8,11 +8,12 @@
 
 ^{:nextjournal.clerk/visibility :hide-ns
   :nextjournal.clerk/no-cache true
-  :nextjournal.clerk/toc :collapsed}
+  :nextjournal.clerk/toc true}
 (ns index
   (:require [nextjournal.clerk :as clerk]
             [wadogo.scale :as s]
-            [fastmath.core :as m]))
+            [fastmath.core :as m]
+            [clojure.string :as str]))
 
 ^{::clerk/visibility :fold ::clerk/viewer :hide-result}
 (defn cont->cont
@@ -64,6 +65,48 @@
                    :opacity 0.9}
             :encoding {:x {:field "point"}}}]})
 
+^{::clerk/visibility {:code :hide :result :hide}}
+(def source-files "https://github.com/scicloj/wadogo/blob/master/src/")
+
+^{::clerk/visibility {:code :hide :result :hide}}
+(defn args->call [f args] (conj (seq args) f))
+^{::clerk/visibility {:code :hide :result :hide}}
+(defn fix-tex [s]  (str/replace s #"\\\\\(|\\\\\)" "\\$"))
+^{::clerk/visibility {:code :hide :result :hide}}
+(defn fix-anchor [s] (str/replace s #"\[\[(.+?)\]\]" "[$1](#LOS-$1)"))
+
+^{::clerk/visibility {:code :hide :result :hide}}
+(defn make-public-fns-table
+  [ns]
+  (clerk/html
+   [:div
+    [:div
+     [:span [:b {:class "underline decoration-2 decoration-gray-400"} (name ns)] " namespace"]
+     [:p]
+     [:div (clerk/md (->> (or (:doc (meta (the-ns ns))) "\n") fix-tex fix-anchor))]]
+    [:div (for [v (->> (ns-publics ns)
+                       (sort-by first)
+                       (map second))
+                :let [{:keys [name file macro arglists doc line const deprecated]} (meta v)]]
+            [:div {:class "pb-8" :id (str "LOS-" (clojure.core/name name))} ;; add border
+             
+             (clerk/html [:span [:b {:class (str "underline decoration-2 decoration-gray-400"
+                                                 (when deprecated " text-gray-400"))} name]
+                          (when macro [:sup " MACRO"])
+                          (when const [:sup " CONST"])
+                          [:sup [:a {:href (str source-files file "#L" line)} "  [source]"]]])
+             (when deprecated [:div [:i (if (string? deprecated)
+                                          (clerk/md (str "Deprecated: "(->> deprecated fix-tex fix-anchor)))
+                                          "Deprecated")]])
+             [:p]
+             (when const [:div (clerk/code (var-get v)) [:p]])
+             (when arglists [:div
+                             [:div (for [args arglists]
+                                     (clerk/code (args->call name args)))]
+                             [:p]])
+             [:div (clerk/md (->> (or doc "\n") fix-tex fix-anchor))]])]]))
+
+
 ;; ## Scales
 
 ;; The scale is a structure which helps to transform one set of values into another. There are many different ways of mapping between domain and range, collected in the table below.
@@ -94,6 +137,7 @@
 ;; ## Basics
 
 ;; Let's import `wadago.scale` name space as an entry point
+#_:clj-kondo/ignore
 (require '[wadogo.scale :as s])
 
 ;; To illustrate functions we'll use the logarithmic scale mapping `[2.0 5.0]` domain to `[-1.0 1.0]` range. To create any scale we use `scale` multimethod. Parameters are optional and there as some defaults for every scale kind.
@@ -612,10 +656,11 @@ s/mapping
 
 ;; ## Ordinal (discrete -> discrete)
 
-;; Maps values from domain to a range.
+;; Maps values from domain to a range. When types are mixed, don't forget to turn off sorting. By default domain will be sorted.
 
 (def ordinal-scale (s/scale :ordinal {:domain [:a :b "11" 0]
-                                    :range [-3 :some-key [2 3] {:a -11}]}))
+                                    :range [-3 :some-key [2 3] {:a -11}]
+                                    :sort? false}))
 
 (map ordinal-scale [0 :a :b "11" :other-key])
 
@@ -735,6 +780,7 @@ s/mapping
 
 ;; You can also make scale from any probability distribution based on `cdf` and `icdf` functions.
 
+#_:clj-kondo/ignore
 (require '[fastmath.random :as rng])
 
 (def pascal-distribution (rng/distribution :pascal {:p 0.3 :r 10}))
@@ -759,6 +805,11 @@ s/mapping
 ;; [![](https://img.shields.io/clojars/v/org.scicloj/wadogo.svg)](https://clojars.org/org.scicloj/wadogo)
 
 ;; Source code is available on [github](https://github.com/scicloj/wadogo).
+
+;; # List of functions
+
+^{::clerk/visibility :hide}
+(make-public-fns-table 'wadogo.scale)
 
 ^{::clerk/visibility :hide
   ::clerk/viewer :hide-result}

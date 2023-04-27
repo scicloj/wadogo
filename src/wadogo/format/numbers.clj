@@ -6,7 +6,7 @@
 (m/use-primitive-operators)
 
 ;; maximum double power for precise calculations
-(def ^:private ^:const ^long kp-max 22)
+(def ^:private ^:const kp-max 22)
 
 ;; powers for scientific notation
 (def ^:private tbl [1e-1,

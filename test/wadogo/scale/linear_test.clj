@@ -40,15 +40,14 @@
       (is (:pass? (tc/quick-check
                    100
                    (prop/for-all* [(gen/double* {:min 0.0 :max 100.0 :infinite? false :NaN? false})]
-                                  (fn [n] (let [acc 6
-                                               n (m/approx n acc)
-                                               f1 (m/approx (l n) acc)
-                                               f2 (m/approx (s/forward l n) acc)
-                                               i (m/approx (s/inverse l n) acc)
-                                               fres (m/approx (* 2.0 n) acc)
-                                               ires (m/approx (* 0.5 n) acc)
-                                               res (and (== f1 f2 fres)
-                                                        (== i ires))]
+                                  (fn [n] (let [f1 (l n)
+                                               f2(s/forward l n)
+                                               i (s/inverse l n)
+                                               fres (* 2.0 n)
+                                               ires (* 0.5 n)
+                                               res (and (m/delta-eq f1 f2)
+                                                        (m/delta-eq f2 fres)
+                                                        (m/delta-eq i ires))]
                                            #_(when-not res (println [(s/forward l n)
                                                                      (s/inverse l n)
                                                                      (* 2.0 n) (* 0.5 n)]

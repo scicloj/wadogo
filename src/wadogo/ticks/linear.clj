@@ -4,9 +4,9 @@
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 
-(def ^:const ^:private ^double e10 (m/sqrt 50.0))
-(def ^:const ^:private ^double e5 (m/sqrt 10.0))
-(def ^:const ^:private ^double e2 m/SQRT2)
+(def ^:const ^:private e10 (m/sqrt 50.0))
+(def ^:const ^:private e5 (m/sqrt 10.0))
+(def ^:const ^:private e2 m/SQRT2)
 
 (defn step-mult
   "Step multiplier"
