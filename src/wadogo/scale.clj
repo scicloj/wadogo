@@ -25,6 +25,11 @@
 (def ^{:doc "List of all possible scales"}
   scale-kinds (-> common/scale methods keys sort))
 
+(defn scale?
+  "Checks if given object is a Scale object"
+  [scale]
+  (instance? ScaleType scale))
+
 (defn scale
   "Create a scale
 

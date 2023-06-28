@@ -285,6 +285,11 @@
 s/scale-kinds
 s/mapping
 
+;; To verify if given object is scale, use `scale?` predicate
+
+(s/scale? (s/scale :linear))
+(s/scale? nil)
+
 ;; ## Numerical scales (continuous -> continuous)
 
 ;; This group of scales transform continuous domain into continuous range of numbers.
@@ -820,3 +825,4 @@ s/mapping
   (clerk/clear-cache!)
   (clerk/recompute!)
   (clerk/halt!))
+

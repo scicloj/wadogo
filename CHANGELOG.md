@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.0.1-SNAPSHOT]
+
+### Added
+
+* `scale?` predicate to check if given object is scale or not
+
 ## [1.0.0]
 
 Library revision and `clerk` notebook documentation
