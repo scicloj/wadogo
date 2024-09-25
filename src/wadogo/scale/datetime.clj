@@ -60,3 +60,5 @@
                   (datetime-forward start total rstart rend)
                   (datetime-inverse start total rstart rend)
                   (assoc (strip-keys params) :millis total)))))
+
+(m/unuse-primitive-operators)

@@ -1,4 +1,4 @@
-(defproject org.scicloj/wadogo "1.0.1-SNAPSHOT"
+(defproject org.scicloj/wadogo "1.1.0-alpha1"
   :description "Scales for Clojure"
   :url "https://github.com/scicloj/wadogo"
   :scm {:name "git"

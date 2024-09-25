@@ -31,3 +31,5 @@
                   (log-forward n? (m/make-norm ls le rstart rend))
                   (log-inverse n? (m/make-norm rstart rend ls le))
                   (strip-keys params)))))
+
+(m/unuse-primitive-operators)

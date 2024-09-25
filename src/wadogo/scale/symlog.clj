@@ -70,3 +70,5 @@
                   (symlog-forward C forward (m/make-norm sls sle rstart rend))
                   (symlog-inverse C inverse (m/make-norm rstart rend sls sle))
                   (assoc (strip-keys params) :C C)))))
+
+(m/unuse-primitive-operators)

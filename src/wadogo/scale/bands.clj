@@ -87,3 +87,5 @@
                          :bandwidth (* rdiff (m/abs size))
                          :step (* rdiff (m/abs step))
                          :bands lst)))))
+
+(m/unuse-primitive-operators)

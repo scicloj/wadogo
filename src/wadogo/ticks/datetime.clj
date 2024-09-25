@@ -29,3 +29,5 @@
   [start end diff ^long ticks]
   (let [step (diff->step diff ticks)]
     (calc-dt-ticks start end step)))
+
+(m/unuse-primitive-operators)

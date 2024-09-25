@@ -88,3 +88,4 @@
          f (str prefix "%" pad suffix)]
      (fn [x] (if x (format f (int x)) na)))))
 
+(m/unuse-primitive-operators)

@@ -41,3 +41,4 @@
                   (build-inverse pi (m/make-norm rstart rend pstart pend))
                   (strip-keys params)))))
 
+(m/unuse-primitive-operators)

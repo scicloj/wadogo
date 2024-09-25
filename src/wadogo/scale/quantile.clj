@@ -47,3 +47,4 @@
                   (values->reversed-map values :value)
                   (assoc (strip-keys params) :quantiles (butlast (map (juxt :dend :quantile) values)))))))
 
+(m/unuse-primitive-operators)

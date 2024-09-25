@@ -46,3 +46,5 @@
                             n (m/ceil (inc (- start end)))]
                         (map #(/ (- start ^double %) step) (range n))))]
       (if reverse? (reverse res) res))))
+
+(m/unuse-primitive-operators)

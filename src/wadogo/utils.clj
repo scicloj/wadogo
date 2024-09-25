@@ -18,8 +18,8 @@
 (defn interval-steps-before
   "Maps `steps` values into ordinal values (0,1,2...)."
   [steps]
-  (comp unchecked-int (i/step-before (map m/prev-double steps)
-                                     (clojure.core/range (count steps)))))
+  (comp unchecked-int (i/interpolation :step-before (map m/prev-double steps)
+                                       (clojure.core/range (count steps)))))
 
 (defn make-norm
   "If domain or range has degenerated interval, treat it special"
@@ -135,3 +135,5 @@
   [inverse norm]
   (fn ^double [^double x]
     (inverse (norm x))))
+
+(m/unuse-primitive-operators)

@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.1.0-alpha1]
+
+Update to Fastmath 3.0.0-alpha
+
+### Fixed
+
+* interpolated scale updated to new Fastmath API
+
 ## [1.0.1-SNAPSHOT]
 
 ### Added

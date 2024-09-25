@@ -33,3 +33,5 @@
     (map (fn [^double v]
            (let [^double pv (pows v)]
              (if negative? (- pv) pv))) (linear-ticks lstart lend c))))
+
+(m/unuse-primitive-operators)
