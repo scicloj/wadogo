@@ -3,10 +3,10 @@
 
   Attributes:
 
-  - `:domain` (default `1`): the domain values or their count `n` (values `0..n-1`).
+  - `:domain` (default `1`): the domain values (repeated values removed, first occurrences kept) or their count `n` (values `0..n-1`).
   - `:range` (default `[0.0 1.0]`): two numbers in any order; a longer sequence is reduced to its minimum and maximum.
-  - `:padding-in` (default `0.0`): space between bands as a proportion of the step, from `[0, 1]` (d3 `paddingInner`).
-  - `:padding-out` (default `0.0`): space before the first and after the last band as a proportion of the step (d3 `paddingOuter`).
+  - `:padding-in` (default `0.0`): space between bands as a proportion of the step, constrained to `[0, 1]` (d3 `paddingInner`).
+  - `:padding-out` (default `0.0`): space before the first and after the last band as a proportion of the step (d3 `paddingOuter`), non-negative.
   - `:align-outer` (default `0.5`): how the outer space is distributed: `0.0` all after the last band, `1.0` all before the first band (d3 `align`).
   - `:align` (default `0.5`): position of the point inside every band, from `0.0` (band start) to `1.0` (band end); also `:spread` (positions spread from `0.0` to `1.0` over the bands) or a sequence of positions (cycled).
   - `:round` (default `false`): when truthy, the step is floored and the band start and width are rounded, as d3 `round`.
@@ -18,7 +18,7 @@
   - `:rstart`, `:rend`: the band ends; `:rstart` is the end nearer the range start, so for a reversed range `:rstart` is larger than `:rend`.
   - `:point`: the point at `:align` from `:rstart` to `:rend`.
 
-  The band width and the step (distance between band starts) are stored under `:bandwidth` and `:step`, the band maps under `:bands` in [[data]]. The inverse returns the domain value of the band containing a number (ends included), `:unknown` for padding and values outside the range.
+  The band width and the step (distance between band starts) are stored under `:bandwidth` and `:step`, the band maps under `:bands` in [[data]]. The inverse returns the domain value of the band containing a number (ends included), `:unknown` for padding and values outside the range. `:padding-in` is constrained to `[0, 1]`; `1.0` gives bands of zero width (as the `:point` kind). An empty domain gives no bands.
 
   Ticks are the domain values; `nice` returns the scale unchanged."
   (:require [fastmath.core :as m]
@@ -29,6 +29,11 @@
 
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
+
+(defn ^:no-doc distinct-values
+  "Internal. A sequence domain without repeated values (first occurrences kept, as d3), a count unchanged."
+  [domain]
+  (if (sequential? domain) (vec (distinct domain)) domain))
 
 (defn- decode-align
   [align ^long bands-no]
@@ -85,7 +90,7 @@
   ([s params]
    (let [params (merge-params s params)
          [^double rstart ^double rend] (->extent (:range params))
-         [^long bands-no bands] (build-seq (:domain params))
+         [^long bands-no bands] (build-seq (distinct-values (:domain params)))
          {:keys [^double padding-in ^double padding-out ^double align-outer unknown]} params
          r (Vec2. rstart rend)
          ^Vec3 layout (band-layout bands-no r (Vec3. (m/constrain padding-in 0.0 1.0) padding-out (m/constrain align-outer 0.0 1.0))

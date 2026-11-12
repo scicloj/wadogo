@@ -7,14 +7,16 @@
   - `:range` (default `[0.0 1.0]`): as for the `:linear` kind.
   - `:clamp`, `:unknown`, `:round`: as for the `:linear` kind.
 
+  A degenerate domain (equal ends) maps earlier datetimes to the range start, later ones to the range end and the domain datetime to the middle; it has no default ticks. A degenerate range behaves the same way in the inverse. `LocalTime` values are placed on the current date at each conversion, so a scale built from times shouldn't outlive the day.
+
   The domain is stored as `LocalDateTime` values. Forward accepts the same types as the domain and is linear in the elapsed time (millisecond precision with the nanosecond fraction); the inverse returns a `LocalDateTime` rounded to the millisecond. The domain length in milliseconds (`BigDecimal`, negative for a reversed domain) is stored under `:millis` in [[data]].
 
-  Default ticks (`:ticks-method :default`, 10 ticks) are spaced by a whole number of the time unit nearest to the tick step, starting at the domain start truncated to that unit, strictly inside the domain (not aligned to calendar units); `:pretty` ticks (5 ticks) follow R's `pretty()` for date-times. Ticks of a reversed domain are reversed. `nice` extends the domain to whole time units (`:default`) or to the outer pretty ticks (`:pretty`)."
+  Default ticks (`:ticks-method :default`, 10 ticks) are spaced by a whole number of the time unit nearest to the tick step, starting at the domain start truncated to that unit, strictly inside the domain (not aligned to calendar units); `:pretty` ticks (5 ticks) follow R's `pretty()` for date-times. Ticks of a reversed domain are reversed. Values outside the domain are extrapolated (unless clamped). `nice` extends the domain to whole time units (`:default`) or to the outer pretty ticks (`:pretty`)."
   (:require [fastmath.core :as m]
             [java-time :as dt]
 
             [wadogo.common :refer [scale continuous-scale strip-keys merge-params]]
-            [wadogo.utils :refer [datetime-diff-millis ->extent]])
+            [wadogo.utils :refer [datetime-diff-millis ->extent make-norm]])
   (:import [java.time Instant ZonedDateTime OffsetDateTime ZoneOffset LocalDateTime]))
 
 (set! *unchecked-math* :warn-on-boxed)
@@ -39,19 +41,22 @@
     :else ld))
 
 (defn- datetime-forward
-  "Function returning the range value of a datetime."
+  "Function returning the range value of a datetime; for an empty domain (`total` zero) as `wadogo.utils/make-norm`: `rstart` before, `rend` after, the middle at the domain."
   [start ^BigDecimal total ^double rstart ^double rend]
-  (fn ^double [tm]
-    (m/lerp rstart rend (-> (datetime-diff-millis start (->ldt tm))
-                            (.divide total java.math.MathContext/DECIMAL128)
-                            (.doubleValue)))))
+  (if (zero? (.signum total))
+    (let [degenerate-norm (make-norm 0.0 0.0 rstart rend)]
+      (fn ^double [tm] (degenerate-norm (.signum (datetime-diff-millis start (->ldt tm))))))
+    (fn ^double [tm]
+      (m/lerp rstart rend (-> (datetime-diff-millis start (->ldt tm))
+                              (.divide total java.math.MathContext/DECIMAL128)
+                              (.doubleValue))))))
 
 (defn- datetime-inverse
-  "Function returning the datetime of a range value."
+  "Function returning the datetime of a range value; for an empty range (`rstart` equal to `rend`) as `wadogo.utils/make-norm`: the domain start below, the end above, the middle at the range value."
   [start ^BigDecimal total ^double rstart ^double rend]
-  (fn [^double t]
-    (let [tt (m/norm t rstart rend)]
-      (->> (BigDecimal. tt)
+  (let [range-norm (make-norm rstart rend 0.0 1.0)]
+    (fn [^double t]
+      (->> (BigDecimal. ^double (range-norm t))
            (.multiply total)
            (m/round)
            (dt/millis)

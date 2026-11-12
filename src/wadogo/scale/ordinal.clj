@@ -8,7 +8,7 @@
   - `:sort?` (default `true`): how the domain is ordered: `true` sorts with `compare`, a function is used as the comparator of `sort`, a falsy value keeps the given order (needed for values of mixed types).
   - `:unknown` (default `nil`): returned for values outside the domain.
 
-  The second argument of the scale is ignored. The inverse returns the first domain value mapped to a range value (`nil` for other values). Ticks are the domain values; `nice` returns the scale unchanged.
+  With an empty domain and range every value is unknown. The second argument of the scale is ignored. The inverse returns the first domain value mapped to a range value (`nil` for other values). Ticks are the domain values; `nice` returns the scale unchanged.
 
   Throws `ex-info` with `{:domain domain}` when `:sort?` is `true` and the domain values can't be compared (for example numbers and keywords mixed). The implicit domain growth of d3 isn't supported (scales are immutable)."
   (:require [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]))

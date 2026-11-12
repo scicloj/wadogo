@@ -7,7 +7,7 @@
   - `:exponent` (default `0.5`, square root).
   - `:clamp`, `:unknown`, `:round`: as for the `:linear` kind.
 
-  Forward is linear in `sign(x) * |x|^exponent`, so negative values are mirrored. Ticks and `nice` are linear in the domain. A degenerate domain behaves as for the `:linear` kind."
+  Forward is linear in `sign(x) * |x|^exponent`, so negative values are mirrored. A negative exponent gives a decreasing transform, normalised back to the range ends. Exponent `0.0` maps every value, zero included, to `1.0`, so the transformed domain is degenerate and every value maps to the middle of the range. Ticks and `nice` are linear in the domain. A degenerate domain behaves as for the `:linear` kind."
   (:require [fastmath.core :as m]
 
             [wadogo.common :refer [scale continuous-scale strip-keys merge-params]]

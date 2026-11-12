@@ -4,10 +4,10 @@
   Attributes:
 
   - `:domain` (default `[0.0 1.0]`): two numbers in ascending order; a longer sequence is reduced to its minimum and maximum.
-  - `:range` (default `[0]`): the range values, one per interval, or their count `n` (values `0..n-1`).
+  - `:range` (default `[0]`): the range values, one per interval, or their count `n` (values `0..n-1`); it shouldn't be empty (forward then throws `IndexOutOfBoundsException`).
   - `:unknown` (default `nil`): returned for `nil` and `NaN` input.
 
-  A value equal to an interval border belongs to the upper interval; values outside the domain belong to the first or the last interval. With a second truthy argument the scale returns the interval map: `:dstart`, `:dend`, `:id` (position) and `:value`.
+  A degenerate domain (equal ends) puts values below it into the first interval and the others into the last one. A value equal to an interval border belongs to the upper interval; values outside the domain belong to the first or the last interval. With a second truthy argument the scale returns the interval map: `:dstart`, `:dend`, `:id` (position) and `:value`.
 
   The inverse maps a range value to its interval map (the first one when a value repeats). The inner borders are stored under `:thresholds` in [[data]]. Ticks are the range values; `nice` returns the scale unchanged.
 

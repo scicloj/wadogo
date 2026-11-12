@@ -8,7 +8,7 @@
   - `:estimation-strategy` (default `:r7`, as d3 and R's default): quantile estimation method of `fastmath.stats/quantiles`, as `:legacy`, `:r1` to `:r9`.
   - `:unknown` (default `nil`): returned for `nil` and `NaN` input.
 
-  A value equal to a quantile belongs to the upper interval; values below the sample minimum belong to the first interval and values above the maximum to the last one. With a second truthy argument the scale returns the interval map: `:dstart`, `:dend`, `:value`, `:count` (sample values inside) and `:quantile` (upper probability).
+  Repeated quantiles (a sample with many equal values, or a single value) give empty intervals, which no value maps to: a one-value sample maps values below it to the first interval and the others to the last one. A value equal to a quantile belongs to the upper interval; values below the sample minimum belong to the first interval and values above the maximum to the last one. With a second truthy argument the scale returns the interval map: `:dstart`, `:dend`, `:value`, `:count` (sample values inside) and `:quantile` (upper probability).
 
   The inverse maps a range value to its interval map (the first one when a value repeats). The inner quantiles with their probabilities are stored under `:quantiles` in [[data]]. Ticks are the range values; `nice` returns the scale unchanged."
   (:require [fastmath.core :as m]

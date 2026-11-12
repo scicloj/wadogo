@@ -34,6 +34,10 @@
                                (catch clojure.lang.ExceptionInfo e (ex-data e)))))
   (is (= [:a :b] (map (s/scale :quantize {:domain [10 0 5] :range [:a :b]}) [1 9])) "longer domains: minimum and maximum"))
 
+(deftest repeated-domain-values-test
+  (is (= [25.0 75.0] (map (s/scale :bands {:domain [:a :b :a] :range [0 100]}) [:a :b])))
+  (is (= [:a :b] (s/domain (s/scale :point {:domain [:a :b :a] :range [0 100]})))))
+
 (deftest point-test
   (let [p (s/scale :point {:domain [:a :b :c] :range [0 100] :padding 0.5})]
     (is (= :b (s/inverse p 50)))

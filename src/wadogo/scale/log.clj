@@ -5,7 +5,7 @@
 
   - `:domain` (default `[1.0 10.0]`): two numbers of the same sign; a longer sequence is reduced to its minimum and maximum. A one-value domain `[x]` together with `:base` becomes `[x base]`.
   - `:range` (default `[0.0 1.0]`).
-  - `:base` (default `10.0`): base of the logarithm, used only by ticks and `nice` (the mapping doesn't depend on it).
+  - `:base` (default `10.0`): base of the logarithm, greater than `1.0`, used only by ticks and `nice` (the mapping doesn't depend on it).
   - `:clamp`, `:unknown`, `:round`: as for the `:linear` kind.
 
   Forward is linear in the logarithm of the absolute value; values of the other sign than the domain (and zero) give `NaN`.

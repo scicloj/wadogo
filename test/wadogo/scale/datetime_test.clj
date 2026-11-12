@@ -54,3 +54,14 @@
     (is (= ["May"] (s/format sc [dt1])) "pattern by the domain span")
     (is (= ["May"] (s/format (s/with-ticks sc [dt1]))))
     (is (= ["2012-05-05 10:10:10"] (map (wadogo.format.datetime/time-format [dt1]) [dt1])))))
+
+(deftest datetime-degenerate-test
+  (let [d (LocalDateTime/of 2020 1 1 0 0)
+        sc (s/scale :datetime {:domain [d d]})]
+    (is (= [0.0 0.5 1.0] (map sc [(.minusDays d 1) d (.plusDays d 1)])))
+    (is (= d (s/inverse sc 0.3)))
+    (is (= [] (s/ticks sc)))
+    (is (= [d d] (s/domain (s/nice sc)))))
+  (let [d (LocalDateTime/of 2020 1 1 0 0)
+        sc (s/scale :datetime {:domain [d (.plusDays d 2)] :range [1 1]})]
+    (is (= [d (.plusDays d 1) (.plusDays d 2)] (map #(s/inverse sc %) [0 1 2])) "degenerate range")))

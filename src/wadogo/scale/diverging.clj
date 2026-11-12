@@ -6,7 +6,7 @@
   - `:domain`: three numbers (default `[-1.0 0.0 1.0]`, `[0.1 1.0 10.0]` for the `:log` transform).
   - `:interpolator`, `:transform`, `:exponent`, `:C`, `:base`, `:clamp`, `:unknown`, `:round`: as for the `:sequential` kind.
 
-  Values between `low` and `mid` are normalised to `[0, 0.5]`, values between `mid` and `high` to `[0.5, 1]`, each half linearly in the transformed domain. A degenerate half (equal ends) maps to `0.5`, as d3. The range is `[(interpolator 0) (interpolator 0.5) (interpolator 1)]` and the `:range` attribute is ignored. The inverse maps a normalised value from `[0, 1]` back to the domain.
+  `mid` should lie between `low` and `high` (in the transformed domain); otherwise the halves overlap and the mapping isn't monotone (d3 behaves the same). For the `:log` transform all three values must have the same sign, a `mid` of the other sign gives `NaN`. Values between `low` and `mid` are normalised to `[0, 0.5]`, values between `mid` and `high` to `[0.5, 1]`, each half linearly in the transformed domain. A degenerate half (equal ends) maps to `0.5`, as d3. The range is `[(interpolator 0) (interpolator 0.5) (interpolator 1)]` and the `:range` attribute is ignored. The inverse maps a normalised value from `[0, 1]` back to the domain.
 
   Ticks and `nice` use the first and last domain value (`nice` keeps `mid`).
 

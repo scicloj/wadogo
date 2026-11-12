@@ -57,7 +57,13 @@
                   :axis {:title nil}}
               :x {:type "quantitative"
                   :axis {:title nil}}}
-   :layer [{:mark "rule"
+   :layer [{:data {:values (map (fn [scale]
+                                  (let [[r0 r1] (s/range scale)]
+                                    {:name (s/data scale :name) :r0 r0 :r1 r1})) scales)}
+            :mark {:type "rule" :color "lightgray" :strokeDash [2 2]}
+            :encoding {:x {:field "r0"}
+                       :x2 {:field "r1"}}}
+           {:mark "rule"
             :encoding {:x {:field "rstart"}
                        :x2 {:field "rend"}}}
            {:mark {:type "circle"
@@ -545,9 +551,28 @@ s/mapping
 
 ;; ### Other interpolators
 
+;; A scale should be monotone, so use monotone data and a method which preserves monotonicity. `:pchip` and `:monotone` (Fritsch-Carlson) are smooth and monotone:
+
+(def pchip-scale (s/with-data interpolated-scale :interpolator :pchip))
+
+(clerk/vl (cont->cont pchip-scale))
+
 (clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :monotone)))
-(clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :shepard)))
-(clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :loess :interpolator-params [{:bandwidth 0.7}])))
+
+;; Step methods give a piecewise constant scale (`:step` changes value in the middle between points, `:step-before` and `:step-after` at the points):
+
+(clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :step)))
+
+(clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :step-after)))
+
+;; The inverse solves `forward(x) = y` by bisection, so it's exact for any monotone method. Step methods return the start of a plateau, or the position of a jump for values inside it:
+
+(clerk/example
+ (s/inverse interpolated-scale (interpolated-scale 3))  ;; linear
+ (s/inverse pchip-scale (pchip-scale 3))                ;; pchip
+ (s/inverse (s/with-data interpolated-scale :interpolator :step-after) 1)) ;; jump at 4
+
+;; Methods like `:cubic`, `:loess` or `:shepard` can overshoot between points (`:cubic` here decreases between about `3.2` and `4.2`), so they are not suitable for scales.
 
 ;; ### Sequential and diverging scales
 
@@ -757,6 +782,16 @@ s/mapping
 
 (def point-scale (s/scale :point {:domain [:a :b :c :d] :range [0 100] :padding 0.5}))
 
+;; Points (circles) inside the range (dashed line):
+
+(clerk/vl
+ (bands-chart [(s/with-data point-scale :name "padding: 0.5, default")
+               (s/with-data point-scale :name "padding: 0" :padding 0)
+               (s/with-data point-scale :name "padding: 2" :padding 2)
+               (s/with-data point-scale :name "padding: 2, align-outer: 0" :padding 2 :align-outer 0)
+               (s/with-data point-scale :name "padding: 2, align-outer: 1" :padding 2 :align-outer 1)
+               (s/with-data point-scale :name "single value" :domain [:a])]))
+
 (clerk/example
  (map point-scale [:a :b :c :d])
  (s/data point-scale :step)
@@ -920,6 +955,23 @@ s/mapping
 
 ^{::clerk/visibility :hide}
 (make-public-fns-table 'wadogo.scale)
+
+;; # Scale kinds
+
+;; Descriptions returned by `kind-info`: attributes with defaults, mapping, ticks and corner cases.
+
+^{::clerk/visibility {:code :fold :result :hide}}
+(defn make-kinds-table
+  []
+  (clerk/html
+   [:div (for [k s/scale-kinds]
+           [:div {:class "pb-8" :id (str "KIND-" (name k))}
+            [:span [:b {:class "underline decoration-2 decoration-gray-400"} (str k)]]
+            [:p]
+            [:div (clerk/md (->> (s/kind-info k) fix-tex fix-anchor))]])]))
+
+^{::clerk/visibility :hide}
+(make-kinds-table)
 
 ^{::clerk/visibility :hide
   ::clerk/viewer :hide-result}

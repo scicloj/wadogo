@@ -7,7 +7,7 @@
   - `:range` (default `:freedman-diaconis`): a bin estimation method of `fastmath.stats/estimate-bins` (as `:sturges`, `:sqrt`, `:rice`, `:doane`, `:scott`, `:freedman-diaconis`; `:default` and `nil` mean `:freedman-diaconis`) with the bin positions `0..n-1` as values, a bin count `n`, or the range values (one per bin).
   - `:unknown` (default `nil`): returned for `nil` and `NaN` input.
 
-  A value equal to a bin border belongs to the upper bin; values below the sample minimum belong to the first bin and values above the maximum to the last one. With a second truthy argument the scale returns the bin map: `:dstart`, `:dend`, `:id` (position), `:count` (sample values inside) and `:value`.
+  A sample of equal values gives one bin, whatever the requested count. A value equal to a bin border belongs to the upper bin; values below the sample minimum belong to the first bin and values above the maximum to the last one. With a second truthy argument the scale returns the bin map: `:dstart`, `:dend`, `:id` (position), `:count` (sample values inside) and `:value`.
 
   The inverse maps a range value to its bin map. The `fastmath.stats/histogram` bins are stored under `:bins` in [[data]]. Ticks are the range values; `nice` returns the scale unchanged."
   (:require [fastmath.core :as m]

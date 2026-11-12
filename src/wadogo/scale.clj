@@ -242,9 +242,45 @@
 
   The scale is returned unchanged for discrete domains or ranges (`:bands`, `:point`, `:ordinal`, `:quantile`, `:quantize`, `:threshold`, `:histogram`, `:constant`), an explicit sequence of ticks, a domain with equal ends, or when the extension doesn't converge.
 
+  With options `{:max-extension f :max-count n}` the extension is limited: tick counts from the scale's own count
+  (default 10, or 5 for `:pretty`) up to `n` (default 50) are tried, and the first extension that moves the
+  domain ends by at most `f` of the range span in total (measured with the unclamped scale) is used; the scale
+  is returned unchanged when none qualifies. The scale keeps its own `:ticks` (only the domain changes), so with
+  a larger count the domain ends needn't be ticks of the scale. Use it when few ticks would round a domain to a
+  much larger one (e.g. `[0.3 8.2]` to `[-10 10]` with 2 ticks).
+
   See also [[with-domain]]."
-  [scale]
-  (common/nice scale))
+  ([scale]
+   (common/nice scale))
+  ([scale {:keys [max-extension max-count] :or {max-count 50}}]
+   (when-not (and (number? max-extension) (>= (double max-extension) 0.0))
+     (throw (ex-info "nice :max-extension must be a non-negative number." {:max-extension max-extension})))
+   (let [t (:ticks (common/scale->map scale))
+         start (cond (number? t) (long t)
+                     (= :pretty (:ticks-method (data scale))) 5
+                     :else 10)]
+     (when-not (and (integer? max-count) (pos? (long max-count)))
+       (throw (ex-info "nice :max-count must be a positive integer." {:max-count max-count})))
+     (if (or (and (some? t) (not (number? t))) (< (long max-count) start))
+       scale
+       (let [unclamped (common/scale (kind scale) (assoc (common/scale->map scale) :clamp false))
+             [r0 r1] (->extent (range scale))
+             span (Math/abs (- (double r1) (double r0)))
+             d0 (first (domain scale))
+             d1 (last (domain scale))
+             extension (fn [niced]
+                         (let [n0 (first (domain niced)) n1 (last (domain niced))]
+                           (if (zero? span)
+                             0.0
+                             (/ (+ (Math/abs (- (double (unclamped n0)) (double (unclamped d0))))
+                                   (Math/abs (- (double (unclamped n1)) (double (unclamped d1)))))
+                                span))))]
+         (or (some (fn [c]
+                     (let [niced (common/nice (with-ticks scale c))]
+                       (when (<= (double (extension niced)) (double max-extension))
+                         (with-domain scale (domain niced)))))
+                   (clojure.core/range start (inc (long max-count))))
+             scale))))))
 
 (defn update-domain
   "Returns `scale` rebuilt with the domain replaced by `(f domain)`, keeping all other attributes.

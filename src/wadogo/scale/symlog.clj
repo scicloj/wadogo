@@ -4,7 +4,7 @@
   Attributes:
 
   - `:domain` (default `[0.0 1.0]`), `:range` (default `[0.0 1.0]`): as for the `:linear` kind.
-  - `:C` (default `1.0`): the constant of the transform `sign(x) * log(1 + |x|/C)`; values with `|x|` much smaller than `C` are mapped almost linearly.
+  - `:C` (default `1.0`, also for `nil`): the positive constant of the transform `sign(x) * log(1 + |x|/C)`; values with `|x|` much smaller than `C` are mapped almost linearly. `0.0` gives `NaN` for every value, a negative `C` isn't meaningful.
   - `:base`: deprecated and ignored (the base of the logarithm cancels in the mapping); kept for compatibility.
   - `:clamp`, `:unknown`, `:round`: as for the `:linear` kind.
 

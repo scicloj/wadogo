@@ -127,3 +127,52 @@
         niced (s/nice sc)]
     (is (= (dissoc (s/->map sc) :domain) (dissoc (s/->map niced) :domain)))
     (is (not= (s/domain sc) (s/domain niced)))))
+
+;; nice with a limited extension
+
+(deftest nice-max-extension-test
+  (let [s (s/scale :linear {:domain [-0.4 8.4] :range [0 190] :ticks 2})]
+    (testing "plain nice with few ticks extends a lot, the limited one doesn't"
+      (is (= [-10.0 10.0] (s/domain (s/nice s))))
+      (is (= [-0.5 8.5] (s/domain (s/nice s {:max-extension 0.1})))))
+    (testing "the scale keeps its own ticks attribute"
+      (is (= 2 (:ticks (s/->map (s/nice s {:max-extension 0.1}))))))
+    (testing "max-extension 0: unchanged unless the domain is already nice"
+      (is (= [-0.4 8.4] (s/domain (s/nice s {:max-extension 0}))))
+      (is (= [0.0 10.0] (mapv double (s/domain (s/nice (s/scale :linear {:domain [0 10]}) {:max-extension 0})))))))
+  (testing "extension is within the limit"
+    (doseq [[lo hi] [[0.13 7.31] [-3.7 12.2] [0.001 0.0093] [1000 1987] [-5 5]]
+            f [0.05 0.1 0.25]]
+      (let [s (s/scale :linear {:domain [lo hi] :range [0 100] :ticks 3})
+            [a b] (s/domain (s/nice s {:max-extension f}))]
+        (is (<= a lo) (str [lo hi f]))
+        (is (>= b hi) (str [lo hi f]))
+        (is (<= (/ (+ (- lo a) (- b hi)) (- hi lo)) (+ f 1e-9)) (str [lo hi f])))))
+  (testing "reversed domain stays reversed"
+    (let [[a b] (s/domain (s/nice (s/scale :linear {:domain [8.4 -0.4] :ticks 2}) {:max-extension 0.1}))]
+      (is (> a b))))
+  (testing "unchanged: explicit ticks, degenerate domain, discrete kinds, max-count below the start"
+    (let [s (s/scale :linear {:domain [0.13 7.31] :ticks [1 2 3]})]
+      (is (unchanged? s (s/nice s {:max-extension 0.1}))))
+    (let [s (s/scale :linear {:domain [3 3]})]
+      (is (unchanged? s (s/nice s {:max-extension 0.1}))))
+    (let [s (s/scale :bands {:domain [:a :b]})]
+      (is (unchanged? s (s/nice s {:max-extension 0.1}))))
+    (let [s (s/scale :linear {:domain [0.13 7.31] :ticks 20})]
+      (is (unchanged? s (s/nice s {:max-extension 0.1 :max-count 5})))))
+  (testing "clamped scales measure the extension unclamped"
+    (let [s (s/scale :linear {:domain [-0.4 8.4] :range [0 190] :ticks 2 :clamp true})]
+      (is (= [-0.5 8.5] (s/domain (s/nice s {:max-extension 0.1}))))))
+  (testing "log and datetime"
+    (let [[a b] (s/domain (s/nice (s/scale :log {:domain [1.5 870] :ticks 2}) {:max-extension 0.2}))]
+      (is (<= a 1.5))
+      (is (>= b 870)))
+    (let [d0 (LocalDateTime/of 2020 1 3 0 0) d1 (LocalDateTime/of 2020 11 27 0 0)
+          [a b] (s/domain (s/nice (s/scale :datetime {:domain [d0 d1] :ticks 2}) {:max-extension 0.1}))]
+      (is (not (pos? (compare a d0))))
+      (is (not (neg? (compare b d1))))))
+  (testing "invalid options"
+    (let [s (s/scale :linear {:domain [0 1]})]
+      (is (thrown? clojure.lang.ExceptionInfo (s/nice s {})))
+      (is (thrown? clojure.lang.ExceptionInfo (s/nice s {:max-extension -0.1})))
+      (is (thrown? clojure.lang.ExceptionInfo (s/nice s {:max-extension 0.1 :max-count 0}))))))

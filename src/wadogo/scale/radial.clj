@@ -6,7 +6,7 @@
   - `:domain` (default `[0.0 1.0]`), `:range` (default `[0.0 1.0]`): as for the `:linear` kind.
   - `:clamp`, `:unknown`, `:round`: as for the `:linear` kind (rounding is applied to the radius).
 
-  Forward is `sign(y) * sqrt(|y|)` of the linear mapping of the domain to the signed squares of the range ends; inverse is its inverse. Ticks and `nice` are linear in the domain. A degenerate domain behaves as for the `:linear` kind."
+  Forward is `sign(y) * sqrt(|y|)` of the linear mapping of the domain to the signed squares of the range ends; inverse is its inverse. Ticks and `nice` are linear in the domain. Range ends of different signs are allowed (squares keep the sign). A degenerate domain maps values below it to the range start, above it to the range end and the value itself to the signed square root of the middle of the squared range."
   (:require [fastmath.core :as m]
             [wadogo.common :refer [scale continuous-scale strip-keys merge-params]]
             [wadogo.utils :refer [->extent make-norm]]))

@@ -13,7 +13,7 @@
 
   The range is `[(interpolator 0) (interpolator 1)]` and the `:range` attribute is ignored. The inverse maps a normalised value from `[0, 1]` (not an interpolator result) back to the domain.
 
-  Ticks and `nice` are those of the `:log` kind for the `:log` transform and linear otherwise. A degenerate domain behaves as for the `:linear` kind.
+  Ticks and `nice` are those of the `:log` kind for the `:log` transform and linear otherwise. A degenerate domain behaves as for the `:linear` kind (normalised values `0.0`, `0.5`, `1.0`; d3 gives `0.5` for all).
 
   Throws `ex-info` with `{:interpolator interpolator}` when the interpolator isn't a function, with `{:transform transform}` for an unknown transform and, for the `:log` transform, with `{:domain domain}` when the domain contains or crosses zero."
   (:require [fastmath.core :as m]

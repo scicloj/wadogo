@@ -80,3 +80,9 @@
   (is (= [0.1 1.0 10.0] (s/domain (s/scale :diverging {:transform :log}))))
   (is (= {:domain [1 2]} (try (s/scale :diverging {:domain [1 2]}) (catch clojure.lang.ExceptionInfo e (ex-data e)))))
   (is (= {:interpolator 1} (try (s/scale :diverging {:interpolator 1}) (catch clojure.lang.ExceptionInfo e (ex-data e))))))
+
+(deftest interpolated-repeated-range-test
+  (let [sc (s/scale :interpolated {:domain [1 2 3] :range [10 20 20]})]
+    (is (= 20.0 (sc 2.5)) "forward works")
+    (is (== 1.5 (s/inverse sc 15)))
+    (is (< (Math/abs (- 2.0 (s/inverse sc 20))) 1.0e-12) "plateau start (up to rounding of forward)")))
