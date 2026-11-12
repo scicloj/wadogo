@@ -160,6 +160,9 @@
       (is (unchanged? s (s/nice s {:max-extension 0.1}))))
     (let [s (s/scale :linear {:domain [0.13 7.31] :ticks 20})]
       (is (unchanged? s (s/nice s {:max-extension 0.1 :max-count 5})))))
+  (testing "zero range span: unchanged (the extension can't be measured)"
+    (let [s (s/scale :linear {:domain [-0.4 8.4] :range [5 5] :ticks 2})]
+      (is (unchanged? s (s/nice s {:max-extension 0.1})))))
   (testing "clamped scales measure the extension unclamped"
     (let [s (s/scale :linear {:domain [-0.4 8.4] :range [0 190] :ticks 2 :clamp true})]
       (is (= [-0.5 8.5] (s/domain (s/nice s {:max-extension 0.1}))))))

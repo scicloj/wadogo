@@ -245,7 +245,7 @@
   With options `{:max-extension f :max-count n}` the extension is limited: tick counts from the scale's own count
   (default 10, or 5 for `:pretty`) up to `n` (default 50) are tried, and the first extension that moves the
   domain ends by at most `f` of the range span in total (measured with the unclamped scale) is used; the scale
-  is returned unchanged when none qualifies. The scale keeps its own `:ticks` (only the domain changes), so with
+  is returned unchanged when none qualifies or the range span is zero. The scale keeps its own `:ticks` (only the domain changes), so with
   a larger count the domain ends needn't be ticks of the scale. Use it when few ticks would round a domain to a
   much larger one (e.g. `[0.3 8.2]` to `[-10 10]` with 2 ticks).
 
@@ -261,7 +261,8 @@
                      :else 10)]
      (when-not (and (integer? max-count) (pos? (long max-count)))
        (throw (ex-info "nice :max-count must be a positive integer." {:max-count max-count})))
-     (if (or (and (some? t) (not (number? t))) (< (long max-count) start))
+     (if (or (and (some? t) (not (number? t))) (< (long max-count) start)
+             (let [[r0 r1] (->extent (range scale))] (== (double r0) (double r1))))
        scale
        (let [unclamped (common/scale (kind scale) (assoc (common/scale->map scale) :clamp false))
              [r0 r1] (->extent (range scale))
