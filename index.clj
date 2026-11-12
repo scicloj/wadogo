@@ -214,6 +214,34 @@
 
 (clerk/vl (cont->cont (s/with-ticks logarithmic [1 50 500])))
 
+;; #### Pretty ticks
+
+;; Continuous and datetime scales can choose ticks in a different way, set by `:ticks-method`:
+
+;; * `:default` - d3 style ticks (10 by default)
+;; * `:pretty` - ticks of R's `pretty()` function (5 by default), only the ones inside the domain. Log scales use subdivisions of powers (multipliers `1..base-1`, for base 10 also 1-2-5 and 1-5) or powers, the grid with number of ticks closest to requested; datetime scales R's `pretty()` for dates.
+
+;; `:ticks-params` can contain `:min-n`, minimal number of intervals (R's `min.n`).
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (s/ticks (s/scale :linear {:domain [0 150]}) 5)
+ (s/ticks (s/scale :linear {:domain [0 150] :ticks-method :pretty}))
+ (s/ticks (s/scale :linear {:domain [3 97] :ticks-method :pretty}))
+ (s/ticks (s/scale :log {:domain [3 700] :ticks-method :pretty})))
+
+;; #### Nice
+
+;; `nice` extends the domain to the nearest ticks outside, so the domain starts and ends with a tick. The ticks are chosen with the scale's `:ticks` and `:ticks-method`. Discrete scales and scales with a list of ticks are not changed.
+
+^{::clerk/visibility :hide}
+(clerk/example
+ (s/domain (s/nice (s/scale :linear {:domain [0.13 0.97]})))
+ (s/domain (s/nice (s/scale :linear {:domain [3 97] :ticks-method :pretty})))
+ (s/ticks (s/nice (s/scale :linear {:domain [3 97] :ticks-method :pretty})))
+ (s/domain (s/nice (s/scale :log {:domain [3 7000]})))
+ (s/domain (s/nice (s/scale :log {:domain [3 7000] :ticks-method :pretty}))))
+
 ;; ### Formatting
 
 ;; Ticks (or any values) can be formatter to a string. `wadogo` provides some default formatters for different kind of scales.
@@ -524,7 +552,7 @@ s/mapping
 
 ;; ### Histogram
 
-;; Creates histogram bins from a data. `:range` can be used to define number of bins or a method of estimation (one of: `:sqrt`, `:sturges`, `:rice`, `:doane`, `:scott` or `:freedman-diaconis` same as `:default`).
+;; Creates histogram bins from a data. `:range` can be used to define number of bins or a method of estimation (one of: `:sqrt`, `:sturges`, `:rice`, `:terrell-scott`, `:doane`, `:scott` or `:freedman-diaconis` (default, `:default` is an alias)).
 
 (defn bin-intervals
   "Create intervals from histogram data"

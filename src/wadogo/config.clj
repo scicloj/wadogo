@@ -10,7 +10,7 @@
    :datetime {:domain (let [ldt (dt/local-date-time)]
                         [(dt/minus ldt (dt/years 1)) ldt])
               :range [0.0 1.0]}
-   :histogram {:range :default}
+   :histogram {:range :freedman-diaconis}
    :interpolated {:domain [0.0 0.5 1.0]
                   :range [0.0 0.5 1.0]
                   :interpolator :linear

@@ -56,7 +56,7 @@
          start (ld->ldt dstart)
          end (ld->ldt dend)
          total (datetime-diff-millis start end)]
-     (->ScaleType :datetime [start end] [rstart rend] (:ticks params) (:fmt params)
+     (->ScaleType :datetime [start end] [rstart rend] (:ticks params) (:formatter params)
                   (datetime-forward start total rstart rend)
                   (datetime-inverse start total rstart rend)
                   (assoc (strip-keys params) :millis total)))))

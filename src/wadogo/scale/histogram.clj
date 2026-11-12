@@ -9,7 +9,8 @@
 
 (defn- ->bins
   [xs r]
-  (let [r (or r :default)]
+  ;; older fastmath `estimate-bins` treated any unknown keyword (incl. `:default`) as Freedman-Diaconis
+  (let [r (if (or (nil? r) (= r :default)) :freedman-diaconis r)]
     (if (keyword? r)
       (let [cnt (stats/estimate-bins xs r)]
         [cnt (range cnt)])

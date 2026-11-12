@@ -1,5 +1,15 @@
-{:deps {org.clojure/clojure {:mvn/version "1.12.0"}
-        generateme/fastmath {:mvn/version "3.0.0-alpha2"}
-        clojure.java-time/clojure.java-time {:mvn/version "1.4.2"}}
- :aliases {:dev {:extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+{:paths ["src"]
+ :deps {org.clojure/clojure {:mvn/version "1.12.0"}
+        generateme/fastmath {:mvn/version "3.0.0-alpha10-SNAPSHOT"}
+        clojure.java-time/clojure.java-time {:mvn/version "1.4.3"}}
+ :aliases {;; clojure -T:build jar | install | deploy
+           :build {:deps {io.github.clojure/tools.build {:mvn/version "0.9.6"}
+                          slipset/deps-deploy {:mvn/version "0.2.1"}}
+                   :ns-default build}
+           ;; clojure -M:test
+           :test {:extra-paths ["test" "test/resources"]
+                  :extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
+                               io.github.cognitect-labs/test-runner {:git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
+                  :main-opts ["-m" "cognitect.test-runner"]}
+           :dev {:extra-deps {org.clojure/test.check {:mvn/version "1.1.1"}
                               io.github.nextjournal/clerk {:mvn/version "0.14.919"}}}}}

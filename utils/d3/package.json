@@ -1,0 +1,10 @@
+{
+  "name": "wadogo-d3-oracle",
+  "private": true,
+  "type": "module",
+  "description": "Oracle data for wadogo tests: d3 log ticks and linear nice",
+  "dependencies": {
+    "d3-array": "3.2.4",
+    "d3-scale": "4.0.2"
+  }
+}

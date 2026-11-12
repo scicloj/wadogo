@@ -40,7 +40,13 @@
   * `:domain` - domain of the scale
   * `:range` - range of the scale
   * `:ticks` - number of ticks or list of ticks
-  * `:formatter` - formatting functions (convertion to string)"
+  * `:ticks-method` - how ticks are chosen for continuous and datetime domains (ignored by other scales):
+      * `:default` (default) - d3 style ticks, 10 ticks by default
+      * `:pretty` - R's `pretty()` ticks inside the domain (log scales: subdivisions of powers of the base or powers, the grid with number of ticks closest to requested), 5 ticks by default
+  * `:ticks-params` - parameters of `:pretty` ticks, a map with `:min-n`, minimal number of intervals (default: `n/3` for numbers, `n/2` for datetime; not used by log scales)
+  * `:formatter` - formatting functions (convertion to string)
+
+  See also `nice`."
   ([scale-kind] (common/scale scale-kind))
   ([scale-kind attributes] (common/scale scale-kind attributes)))
 
@@ -86,8 +92,22 @@
 
 (defn with-domain
   "Modify a domain."
-  [^ScaleType scale domain]
-  (common/scale (.kind scale) (assoc (common/scale->map scale) :domain domain)) )
+  [scale domain]
+  (common/with-domain scale domain))
+
+(defn nice
+  "Extend the domain to the nearest ticks outside it, so the domain ends are ticks (except `:default` datetime ticks, which never contain the domain ends, the domain is extended to whole time units there).
+
+  Ticks are calculated as by `ticks`: with the scale's `:ticks` count and `:ticks-method`.
+  The extension is repeated (up to 10 times) while the tick step changes, as in d3.
+
+  * linear, pow, symlog, interpolated (first and last domain value) and custom scales - multiples of the tick step
+  * log - nearest outer tick (powers of the base or, for `:pretty`, their subdivisions); when linear ticks are used (too few powers inside) and the outer tick would be zero or less, the lower end is the largest power of the base below the domain instead
+  * datetime - time unit of the tick step (`:default`), outer ticks (`:pretty`)
+
+  The scale is returned unchanged for discrete domains (`bands`, `ordinal`, `quantile`, `quantize`, `threshold`, `histogram`, `constant`), explicit list of ticks, a domain with equal ends, or when the extension doesn't converge."
+  [scale]
+  (common/nice scale))
 
 (defn update-domain
   "Modify a domain by a function."

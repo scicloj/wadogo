@@ -8,6 +8,14 @@
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 
+(defn exp10
+  "`10^k`, exact (closest double) for integer `k` in [-22,22]: both `10^|k|` and the division are exact or correctly rounded."
+  ^double [^double k]
+  (cond
+    (and (>= k 0.0) (<= k 22.0)) (m/pow 10.0 k)
+    (and (< k 0.0) (>= k -22.0)) (/ 1.0 (m/pow 10.0 (- k)))
+    :else (m/pow 10.0 k)))
+
 (defn ensure-seq-content
   "If `a` is empty and we have something in `b` - create seq of consecutive numbers."
   [a b]
