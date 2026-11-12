@@ -1,4 +1,7 @@
 (ns wadogo.common
+  "Internal core of scales: the scale type, the constructor multimethod extended by every kind, shared attributes (`:clamp`, `:unknown`, `:round`), ticks, `nice` and formatter selection.
+
+  The public API is `wadogo.scale`; vars here are internal (`:no-doc`), except the ones used by `wadogo.scale/defcustom` expansions, which stay resolvable."
   (:refer-clojure :exclude [range])
   (:require [fastmath.core :as m]
 
@@ -14,7 +17,7 @@
             [wadogo.format.numbers :as fnumbers]
             [wadogo.format.datetime :as fdatetime]
             [wadogo.format.ranges :as franges])
-  (:import [clojure.lang IFn]
+  (:import [clojure.lang IFn ArityException]
            [java.time LocalDateTime]
            [java.time.temporal TemporalAmount]))
 
@@ -24,13 +27,20 @@
                          :d->d [:discrete :discrete]
                          :dt->c [:datetime :continuous]})
 
-(defonce mapping
+(def ^{:no-doc true
+       :doc "Internal. Map from a scale kind to the pair `[domain-type range-type]`, each `:continuous`, `:discrete` or `:datetime`. Custom kinds created by `defcustom` are not listed."}
+  mapping
   {:linear (mappings :c->c)
+   :identity (mappings :c->c)
+   :radial (mappings :c->c)
    :interpolated (mappings :c->c)
    :log (mappings :c->c)
    :symlog (mappings :c->c)
    :pow (mappings :c->c)
+   :sequential (mappings :c->c)
+   :diverging (mappings :c->c)
    :bands (mappings :d->c)
+   :point (mappings :d->c)
    :ordinal (mappings :d->d)
    :quantile (mappings :c->d)
    :quantize (mappings :c->d)
@@ -39,15 +49,25 @@
    :datetime (mappings :dt->c)
    :constant (mappings :d->d)})
 
-(deftype ScaleType [kind domain range ticks formatter forward-fn inverse-fn data]
+(deftype ^:no-doc ScaleType [kind domain range ticks formatter forward-fn inverse-fn data]
   Object
   (toString [_]
     (str (name kind) ": " domain " -> " range (when data (str " " data))))
   IFn
   (invoke [_ v] (forward-fn v))
-  (invoke [_ v interval?] (forward-fn v interval?)))
+  (invoke [_ v interval?] (forward-fn v interval?))
+  (applyTo [this args]
+    (let [n (long (bounded-count 3 args))]
+      (case n
+        1 (.invoke this (first args))
+        2 (.invoke this (first args) (second args))
+        (throw (ArityException. n (str "wadogo scale " (name kind))))))))
 
-(defn scale->map
+(alter-meta! #'->ScaleType assoc :no-doc true
+             :doc "Internal. Positional constructor of a scale: kind, domain, range, ticks, formatter, forward function, inverse function and the map of other attributes.")
+
+(defn ^:no-doc scale->map
+  "Internal. All attributes of `scale` as one map: the other attributes merged with `:kind`, `:domain`, `:range`, `:ticks` and `:formatter`. Building a scale of the same kind from this map gives an equal scale."
   [^ScaleType scale]
   (assoc (.data scale)
          :kind (.kind scale)
@@ -56,21 +76,98 @@
          :ticks (.ticks scale)
          :formatter (.formatter scale)))
 
-(defn strip-keys [m] (dissoc m :domain :range :kind :ticks :formatter))
+(defn ^:no-doc strip-keys
+  "Internal. Attribute map `m` without the keys stored in dedicated scale fields (`:domain`, `:range`, `:kind`, `:ticks`, `:formatter`)."
+  [m] (dissoc m :domain :range :kind :ticks :formatter))
 
 ;;
 
-(defmulti scale (fn [k & _] k))
+(defmulti ^:no-doc scale
+  "Internal. Scale constructor dispatched on the kind keyword, called with the kind and an optional attribute map. Every kind namespace adds a method; `defcustom` adds one for a custom kind."
+  (fn [k & _] k))
+
+;; shared attributes: :unknown, :clamp, :round
+
+(defn ^:no-doc missing-value?
+  "Internal. `true` for `nil` and `NaN`, the inputs mapped to the `:unknown` attribute."
+  [v]
+  (or (nil? v)
+      (and (number? v) (m/nan? (double v)))))
+
+(defn ^:no-doc js-round
+  "Internal. Number `x` rounded half up (JavaScript `Math.round`, as d3 `rangeRound`), as a double."
+  ^double [^double x]
+  (m/floor (+ x 0.5)))
+
+(defn- clamper
+  "Function constraining a value to the closed interval between the smallest and the largest of `xs`, compared with `compare`."
+  [xs]
+  (let [lo (reduce (fn [a b] (if (pos? (compare a b)) b a)) xs)
+        hi (reduce (fn [a b] (if (neg? (compare a b)) b a)) xs)]
+    (if (number? lo)
+      (let [lo (double lo) hi (double hi)]
+        (fn [v] (m/constrain (double v) lo hi)))
+      (fn [v] (cond
+                (neg? (compare v lo)) lo
+                (pos? (compare v hi)) hi
+                :else v)))))
+
+(defn ^:no-doc continuous-scale
+  "Internal. A scale of a kind with a continuous (numerical or datetime) domain and a numerical range, with the shared attributes applied to `forward` and `inverse`.
+
+  Parameters:
+
+  - `kind`, `domain`, `range`: the scale fields; the clamping interval is spanned by the smallest and the largest value of `domain`.
+  - `params`: the attribute map, read for `:ticks`, `:formatter`, `:clamp`, `:unknown` and `:round`.
+  - `forward`, `inverse`: the plain mappings between domain and range.
+  - `data`: the attributes kept in the scale (see [[strip-keys]]).
+
+  - `coerce` (optional): function converting a forward input to the domain type before clamping.
+
+  The forward function returns `:unknown` for `nil` and `NaN`, constrains the input to the domain when `:clamp` is truthy and rounds the result half up when `:round` is truthy. The inverse function constrains its result to the domain when `:clamp` is truthy."
+  ([kind domain range params forward inverse data]
+   (continuous-scale kind domain range params forward inverse data nil))
+  ([kind domain range params forward inverse data coerce]
+  (let [{:keys [clamp unknown round]} params
+        dclamp (when clamp (cond-> (clamper domain) coerce (comp coerce)))
+        fwd (cond
+              (and dclamp round) (fn [v] (js-round (forward (dclamp v))))
+              dclamp (fn [v] (forward (dclamp v)))
+              round (fn [v] (js-round (forward v)))
+              :else forward)
+        inv (if dclamp (fn [v] (dclamp (inverse v))) inverse)]
+    (ScaleType. kind domain range (:ticks params) (:formatter params)
+                (fn [v] (if (missing-value? v) unknown (fwd v)))
+                inv
+                data))))
+
+(defn ^:no-doc interval-forward
+  "Internal. Forward function of a kind mapping numbers to intervals (continuous domain, discrete range).
+
+  `step-fn` maps a number to an interval index, `intervals` is the vector of interval maps (each with the range value under `:value`). The function of one argument returns the `:value` of the interval of a number, with a second truthy argument the whole interval map; `unknown` is returned for `nil` and `NaN`."
+  [step-fn intervals unknown]
+  (fn interval-forward-fn
+    ([v] (interval-forward-fn v false))
+    ([v interval?]
+     (if (missing-value? v)
+       unknown
+       (let [res (intervals (step-fn (double v)))]
+         (if interval? res (:value res)))))))
 
 ;; ticks
 
-(defn-  kind->dispatch
+(def ^:private transformed-kinds #{:sequential :diverging})
+
+(defn- kind->dispatch
+  "Ticks and `nice` method of a scale: `:log`, `:linear`, `:discrete` (continuous domain, discrete range), `:ordinal` (discrete domain), `:datetime`, or the kind of a custom scale."
   [^ScaleType scale]
   (let [kind (.kind scale)
         [d r] (mapping kind)]
     (if (and d r)
       (cond
-        (= :log kind) :log
+        (or (= :log kind)
+            (and (transformed-kinds kind)
+                 (= :log (:transform (.data scale))))) :log
         (and (= d :continuous)
              (= r :discrete)) :discrete
         (= d :discrete) :ordinal
@@ -82,7 +179,7 @@
 (def ^:private ^:const default-count 10)
 (def ^:private ^:const default-pretty-count 5)
 
-(defn ticks-method
+(defn- ticks-method
   "Tick selection method of a continuous scale (`:ticks-method` attribute): `:default` or `:pretty`."
   [^ScaleType scale]
   (let [method (or (:ticks-method (.data scale)) :default)]
@@ -109,9 +206,12 @@
   [^ScaleType scale n default-min-n]
   (get-in (.data scale) [:ticks-params :min-n] (default-min-n n)))
 
-(defmulti ticks (fn [scale] (kind->dispatch scale)))
+(defmulti ^:no-doc ticks
+  "Internal. Ticks of a scale, dispatched on the kind group (see `wadogo.scale/ticks`)."
+  (fn [scale] (kind->dispatch scale)))
 
-(defn linear-ticks
+(defn- linear-ticks
+  "Explicit ticks `lticks`, or d3 style ticks of `ldomain` (first and last value) for a count `lticks` (default 10)."
   [lticks ldomain]
   (let [t (or lticks default-count)]
     (if-not (number? t) t
@@ -131,7 +231,8 @@
                   (tpretty/pretty-ticks (first domain) (last domain) n
                                         (pretty-min-n scale n tpretty/default-min-n)))))))
 
-(defn discrete->ticks
+(defn- discrete->ticks
+  "Explicit ticks `tcks`, all values of `data` (`tcks` is `nil`), or about `tcks` values of `data` taken at a regular step."
   [tcks data]
   (let [t (or tcks data)]
     (if-not (number? t) t
@@ -154,12 +255,16 @@
   [t]
   (when (and (some? t) (not (neg? (double t)))) t))
 
+(def ^:private ^:const default-log-base 10.0)
+
 (defmethod ticks :log [^ScaleType scale]
   (let [t (.ticks scale)]
     (if (explicit-ticks? t)
       t
-      (let [[start end] (.domain scale)
-            base (:base (.data scale))]
+      (let [domain (.domain scale)
+            start (first domain)
+            end (last domain)
+            base (:base (.data scale) default-log-base)]
         (case (ticks-method scale)
           :default (tlog/log-ticks start end (log-count t) base)
           :pretty (tlog/pretty-log-ticks start end (pretty-count t) base))))))
@@ -172,7 +277,9 @@
         (case (ticks-method scale)
           :default (let [cnt (or t default-count)]
                      (if (pos? (double cnt))
-                       (tdatetime/datetime-ticks start end (:millis (.data scale)) cnt)
+                       (if (pos? (compare start end))
+                         (reverse (tdatetime/datetime-ticks end start (.abs ^java.math.BigDecimal (:millis (.data scale))) cnt))
+                         (tdatetime/datetime-ticks start end (:millis (.data scale)) cnt))
                        []))
           :pretty (let [n (pretty-count t)]
                     (tpdatetime/pretty-datetime-ticks start end n
@@ -180,8 +287,8 @@
 
 ;; nice
 
-(defn with-domain
-  "Rebuild a scale with a new domain, keeping all other attributes."
+(defn ^:no-doc with-domain
+  "Internal. The scale `s` rebuilt by its kind constructor with a new `domain`, keeping all other attributes."
   [^ScaleType s domain]
   (scale (.kind s) (assoc (scale->map s) :domain domain)))
 
@@ -198,7 +305,7 @@
 
 (defmethod nice-bounds :log [^ScaleType scale lo hi]
   (let [t (.ticks scale)
-        base (:base (.data scale))]
+        base (:base (.data scale) default-log-base)]
     (case (ticks-method scale)
       :default (tlog/log-nice-bounds lo hi (log-count t) base)
       :pretty (tlog/pretty-log-nice-bounds lo hi (pretty-count t) base))))
@@ -238,8 +345,8 @@
         [a b] (if reversed? [hi lo] [lo hi])]
     (assoc domain 0 a (dec (count domain)) b)))
 
-(defn nice
-  "Extend the domain of continuous scales to the nearest outer ticks (as d3: repeated until the tick grid doesn't change, up to 10 times).
+(defn ^:no-doc nice
+  "Internal. `scale` with the domain extended to the nearest outer ticks (as d3: repeated until the tick grid doesn't change, up to 10 times); see `wadogo.scale/nice`.
 
   Returns the scale unchanged for discrete domains, explicit ticks, a degenerate domain or no convergence."
   [^ScaleType scale]
@@ -277,22 +384,26 @@
       (and stcks (every? int? stcks)) :ints
       :else :default)))
 
-(defmulti formatter (fn [scale tcks] (formatter->dispatch scale tcks)))
+(defmulti ^:no-doc formatter
+  "Internal. Formatter of `scale` for the values `tcks`: the `:formatter` function, a datetime formatter, a range formatter for interval pairs, a number formatter for doubles or integers, or `str`."
+  (fn [scale tcks] (formatter->dispatch scale tcks)))
 
 (defmethod formatter :default [_ _] str)
 (defmethod formatter :fn [^ScaleType scale _] (.formatter scale))
-(defmethod formatter :datetime [_ tcks] (fdatetime/time-format tcks))
+(defmethod formatter :datetime [^ScaleType scale tcks] (fdatetime/time-format tcks (.domain scale)))
 (defmethod formatter :ints [^ScaleType scale _] (fnumbers/int-formatter (:formatter-params (.data scale))))
 (defmethod formatter :doubles [^ScaleType scale _] (fnumbers/formatter (:formatter-params (.data scale))))
-(defmethod formatter :ranges [^ScaleType scale _] (franges/range-formatter {:formatter-params (.data scale)}))
+(defmethod formatter :ranges [^ScaleType scale _] (franges/range-formatter (:formatter-params (.data scale))))
 
 ;; params
 
-(defn merge-params
+(defn ^:no-doc merge-params
+  "Internal. Attributes `params` over the defaults of the kind `scale-key` (see `wadogo.config/default-params`)."
   [scale-key params]
   (merge (config/default-params scale-key) params))
 
-(defn log-params
+(defn ^:no-doc log-params
+  "Internal. `params` with a one-value `:domain` `[x]` completed to `[x base]` when `:base` is given (`[1.0 base]` for an empty domain)."
   [{:keys [domain base] :as params}]
   (let [[x1 x2] domain]
     (if (and base (not x2))

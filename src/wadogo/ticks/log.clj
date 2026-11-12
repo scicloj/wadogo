@@ -1,4 +1,7 @@
 (ns wadogo.ticks.log
+  "Ticks of the `:log` kind and `nice` bounds: d3 style ([[log-ticks]], [[log-nice-bounds]]) and pretty ([[pretty-log-ticks]], [[pretty-log-nice-bounds]]).
+
+  Ticks are powers of the base, subdivisions of powers (multiples of a power by integers below the base) or, for domains spanning too few powers, linear ticks. Negative domains are handled by mirroring."
   (:require [fastmath.core :as m]
 
             [wadogo.utils :refer [exp10]]
@@ -98,8 +101,19 @@
      :count (if cnt (min span (double cnt)) span)}))
 
 (defn log-ticks
-  "Default log ticks: powers of the base inside the domain, at most `cnt` (or one per power when `nil`).
-  Domains with fewer than two such powers get linear ticks."
+  "Returns d3 style log ticks inside the interval from `start` to `end`.
+
+  Parameters:
+
+  - `start`, `end`: the domain ends, non-zero and of the same sign, in any order (the ticks follow it).
+  - `cnt`: the approximate number of ticks, or `nil` for one tick per power.
+  - `base`: the logarithm base.
+
+  Ticks are powers of the base inside the domain, every `k`-th power when there are more powers than `cnt`. Domains containing fewer than two powers get linear ticks (`cnt` or 10 of them, see `wadogo.ticks.linear/linear-ticks`).
+
+  Returns a sequence of doubles, empty for a domain containing or crossing zero.
+
+  See also [[log-nice-bounds]], [[pretty-log-ticks]]."
   [^double start ^double end cnt ^double base]
   (positive-ticks (fn [^double lo ^double hi]
                     (let [{[le he] :inner :keys [^double powers count]} (exponent-range lo hi cnt base)]
@@ -110,7 +124,14 @@
                   start end))
 
 (defn log-nice-bounds
-  "Sorted domain `[lo hi]` extended to the outer default log ticks: `[lo' hi' grid]` (`grid` identifies the tick step), `nil` when not possible."
+  "Returns the interval from `lo` to `hi` extended to the outer ticks of [[log-ticks]].
+
+  Parameters:
+
+  - `lo`, `hi`: the domain ends, `lo < hi`, non-zero and of the same sign.
+  - `cnt`, `base`: as in [[log-ticks]].
+
+  Returns `[lo' hi' grid]`, where `grid` identifies the tick grid (`wadogo.scale/nice` repeats the extension until it doesn't change), or `nil` when the bounds aren't positive and finite (mirrored for negative domains). When linear ticks are used and the lower outer tick would be zero or less, the largest power of the base below `lo` is used instead."
   [^double lo ^double hi cnt ^double base]
   (positive-bounds (fn [^double lo ^double hi]
                      (let [{[le he] :outer :keys [^double powers count]} (exponent-range lo hi cnt base)]
@@ -179,8 +200,19 @@
       (first (sort-by (juxt #(m/abs (- (count (:ticks %)) n)) #(count (:ticks %))) candidates)))))
 
 (defn pretty-log-ticks
-  "Log ticks with number of ticks closest to `n`: from subdivisions of powers of the base (all multipliers `1..base-1`, also 1-2-5 and 1-5 for base 10) or powers of the base, inside the domain.
-  When even the densest grid has fewer than `n/2` ticks, R pretty linear ticks are used."
+  "Returns log ticks inside the interval from `start` to `end` with the number of ticks closest to `n`.
+
+  Parameters:
+
+  - `start`, `end`: the domain ends, non-zero and of the same sign, in any order (the ticks follow it).
+  - `n`: the requested number of ticks, a non-negative integer.
+  - `base`: the logarithm base.
+
+  Candidate grids are subdivisions of powers of the base (all multipliers `1..base-1` for an integer base, also 1-2-5 and 1-5 for base 10) and every `k`-th power of the base; the grid with the tick count closest to `n` is chosen (ties go to fewer ticks). When even the densest grid has fewer than `n/2` ticks, R pretty linear ticks are used (see `wadogo.ticks.pretty/pretty-ticks`).
+
+  Returns a sequence of doubles, empty for a domain containing or crossing zero.
+
+  See also [[pretty-log-nice-bounds]], [[log-ticks]]."
   [^double start ^double end ^long n ^double base]
   (positive-ticks (fn [^double lo ^double hi]
                     (if-let [{:keys [ticks]} (pretty-log-grid lo hi n base)]
@@ -189,7 +221,14 @@
                   start end))
 
 (defn pretty-log-nice-bounds
-  "Sorted domain `[lo hi]` extended to the nearest outer pretty log ticks (of the chosen grid): `[lo' hi' grid]`, `nil` when not possible."
+  "Returns the interval from `lo` to `hi` extended to the nearest outer ticks of the grid chosen by [[pretty-log-ticks]].
+
+  Parameters:
+
+  - `lo`, `hi`: the domain ends, `lo < hi`, non-zero and of the same sign.
+  - `n`, `base`: as in [[pretty-log-ticks]].
+
+  Returns `[lo' hi' grid]`, where `grid` identifies the tick grid, or `nil` when the bounds aren't positive and finite (mirrored for negative domains)."
   [^double lo ^double hi ^long n ^double base]
   (positive-bounds
    (fn [^double lo ^double hi]

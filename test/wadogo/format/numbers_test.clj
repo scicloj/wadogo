@@ -72,3 +72,14 @@
            '("0.002" "0.0002" "0.000333" "0.1" "-0.0003" "0.0")))
     (is (= (format-sequence h)
            '("0.002" "0.0002" "0.00333" "0.00001" "-0.0003" "0.022" "0.0001")))))
+
+(deftest int-formatter-test
+  (is (= ["7" "-3" "NA"] (map (wadogo.format.numbers/int-formatter) [7 -3 nil])))
+  (is (= ["007" "0x1f"] [((wadogo.format.numbers/int-formatter {:digits 3}) 7)
+                         ((wadogo.format.numbers/int-formatter {:hex? true}) 31)])))
+
+(deftest formatter-options-test
+  (is (= ["1.23" "1.50" "x"] (map (formatter {:digits 2 :na "x"}) [1.23456 1.5 nil])))
+  (is (= ["1.23" "1.5"] (map (formatter {:digits -2}) [1.23456 1.5])) "fewest places up to 2")
+  (is (= "1.234560E+05" ((formatter {:threshold 2}) 123456.0)))
+  (is (= ["nan" "inf" "-inf"] (map (formatter {:nan "nan" :inf "inf" :-inf "-inf"}) [##NaN ##Inf ##-Inf]))))

@@ -1,74 +1,44 @@
-;; https://www.researchgate.net/publication/233967063_A_bi-symmetric_log_transformation_for_wide-range_data
-
 (ns wadogo.scale.symlog
+  "`:symlog` kind: bi-symmetric logarithmic mapping of a continuous numerical domain (any sign, zero included) to a continuous numerical range (d3 `scaleSymlog`).
+
+  Attributes:
+
+  - `:domain` (default `[0.0 1.0]`), `:range` (default `[0.0 1.0]`): as for the `:linear` kind.
+  - `:C` (default `1.0`): the constant of the transform `sign(x) * log(1 + |x|/C)`; values with `|x|` much smaller than `C` are mapped almost linearly.
+  - `:base`: deprecated and ignored (the base of the logarithm cancels in the mapping); kept for compatibility.
+  - `:clamp`, `:unknown`, `:round`: as for the `:linear` kind.
+
+  Ticks and `nice` are linear in the domain. A degenerate domain behaves as for the `:linear` kind.
+
+  See: Webber, A bi-symmetric log transformation for wide-range data, Measurement Science and Technology (2013)."
   (:require [fastmath.core :as m]
-            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params log-params]]
-            [wadogo.utils :refer [->extent]]))
+            [wadogo.common :refer [scale continuous-scale strip-keys merge-params]]
+            [wadogo.utils :refer [->extent make-norm]]))
 
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 
-(defn- forward-e ^double [^double C ^double x] (* (m/sgn x) (m/log1p (m/abs (/ x C)))))
-(defn- inverse-e ^double [^double C ^double y] (* (m/sgn y) C (m/expm1 (m/abs y))))
-
-(defn- forward-10 ^double [^double C ^double x] (* (m/sgn x) (m/log10 (inc (m/abs (/ x C))))))
-(defn- inverse-10 ^double [^double C ^double y] (* (m/sgn y) C (dec (m/pow 10.0 (m/abs y)))))
-
-(defn- forward-2 ^double [^double C ^double x] (* (m/sgn x) (m/log2 (inc (m/abs (/ x C))))))
-(defn- inverse-2 ^double [^double C ^double y] (* (m/sgn y) C (dec (m/pow 2.0 (m/abs y)))))
-
-(defn- make-forward
-  [^double base]
-  (let [lbr (/ (m/log base))]
-    (fn ^double [^double C ^double x]
-      (* (m/sgn x)
-         (m/log (inc (m/abs (/ x C))))
-         lbr))))
-
-(defn- make-inverse
-  [^double base]
-  (fn ^double [^double C ^double y]
-    (* (m/sgn y) C
-       (dec (m/pow base (m/abs y))))))
-
-(defn- symlog-forward
-  [^double C forward norm]
-  (fn ^double [^double v]
-    (norm (forward C v))))
-
-(defn- symlog-inverse
-  [^double C inverse norm]
-  (fn ^double [^double v]
-    (inverse C (norm v))))
-
-;;
-
-(defn- symlog-identity ^double [^double _C ^double v] v)
-
-(defn- base->forward-inverse
-  [^double base]
-  (cond
-    (== base 10.0) [forward-10 inverse-10]
-    (== base m/E) [forward-e inverse-e]
-    (== base 2.0) [forward-2 inverse-2]
-    (m/one? base) [symlog-identity symlog-identity]
-    :else [(make-forward base)
-           (make-inverse base)]))
+(defn ^:no-doc symlog-transform
+  "Internal. `[forward inverse]` symlog transform `sign(x) * log1p(|x|/C)` and its inverse, as d3."
+  [^double C]
+  [(fn ^double [^double x] (* (m/sgn x) (m/log1p (m/abs (/ x C)))))
+   (fn ^double [^double y] (* (m/sgn y) C (m/expm1 (m/abs y))))])
 
 (defmethod scale :symlog
   ([_] (scale :symlog {}))
   ([s params]
-   (let [params (merge-params s (log-params params))
-         base (:base params)
-         C (or (:C params) (/ (m/ln base)))
-         [forward inverse] (base->forward-inverse base)
-         [^double dstart ^double dend] (->extent (:domain params))
+   (let [params (merge-params s params)
+         C (double (or (:C params) 1.0))
+         [forward inverse] (symlog-transform C)
+         [dstart dend] (->extent (:domain params))
          [rstart rend] (->extent (:range params))
-         sls (forward C dstart)
-         sle (forward C dend)]
-     (->ScaleType :symlog [dstart dend] [rstart rend] (:ticks params) (:formatter params)
-                  (symlog-forward C forward (m/make-norm sls sle rstart rend))
-                  (symlog-inverse C inverse (m/make-norm rstart rend sls sle))
-                  (assoc (strip-keys params) :C C)))))
+         sls (forward dstart)
+         sle (forward dend)
+         fnorm (make-norm sls sle rstart rend)
+         inorm (make-norm rstart rend sls sle)]
+     (continuous-scale :symlog [dstart dend] [rstart rend] params
+                       (fn ^double [^double v] (fnorm (forward v)))
+                       (fn ^double [^double v] (inverse (inorm v)))
+                       (strip-keys params)))))
 
 (m/unuse-primitive-operators)

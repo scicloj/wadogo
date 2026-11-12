@@ -1,4 +1,7 @@
 (ns wadogo.format.numbers
+  "Formatters of numbers, used by `wadogo.scale/format` for numerical ticks.
+
+  [[formatter]] writes doubles with a fixed or the shortest exact number of decimal places, switching to scientific notation for large and small magnitudes; [[int-formatter]] writes integers (decimal or hexadecimal, optionally zero padded). Both take the map given as the `:formatter-params` attribute of a scale."
   (:require [fastmath.core :as m]
             [clojure.string :as str]))
 
@@ -57,6 +60,18 @@
       [e? rght])))
 
 (defn formatter
+  "Creates a function formatting a number as a string.
+
+  Parameters (a map, optional):
+
+  - `:digits` (default `-6`): a positive value is the fixed number of decimal places; a negative value `-d` uses the fewest decimal places (at least one, at most `d`) that show the number rounded to `d` places.
+  - `:threshold` (default `8`): scientific notation (as `1.0E+10`) is used when the number has at least this many digits before the decimal point, or this many zeros after it.
+  - `:na` (default `NA`): text of `nil`.
+  - `:nan` (default `NaN`), `:inf` (default `∞`), `:-inf` (default `-∞`): texts of the invalid doubles.
+
+  Integers are formatted as doubles (`3` gives `3.0`). Every number is formatted on its own, so the number of decimal places can differ between values. The number of decimal places is limited to 10.
+
+  See also [[int-formatter]], [[wadogo.format.ranges/range-formatter]]."
   ([] (formatter {}))
   ([{:keys [^long digits threshold na nan inf -inf]
      :or {digits -6 threshold 8 na "NA" nan "NaN" inf "∞" -inf "-∞"}}]
@@ -79,6 +94,17 @@
        na))))
 
 (defn int-formatter
+  "Creates a function formatting an integer as a string.
+
+  Parameters (a map, optional):
+
+  - `:digits` (default `0`): when positive, the minimal width, padded with leading zeros.
+  - `:hex?` (default `false`): when truthy, hexadecimal with the `0x` prefix.
+  - `:na` (default `NA`): text of `nil`.
+
+  The value is converted with `int`, so fractions are truncated and values outside the `int` range throw.
+
+  See also [[formatter]]."
   ([] (int-formatter {}))
   ([{:keys [^long digits na hex?]
      :or {digits 0 na "NA" hex? false}}]

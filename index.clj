@@ -2,7 +2,7 @@
 
 ;; Wadogo is the library which brings various transformations between domain and range (codomain), either continuous or discrete. The idea is based on [d3-scale](https://github.com/d3/d3-scale) and originally was a part of [cljplot](https://github.com/generateme/cljplot) library.
 
-;; There are 13 different scales with unified api.
+;; There are 18 different scales with unified api. `(s/kind-info kind)` returns the full description of a kind.
 
 ;; *The `wadogo` name came up after trying to translate word `scale` into different languages using [google translate](https://translate.google.com/?sl=en&tl=sw&text=scale&op=translate). Swahili word was very pleasant and was choosen on zulip chat by a community. Funny enough is that `wadogo` doesn't mean `scale` at all but `small` or `little`. Translator failed here.* 
 
@@ -115,16 +115,21 @@
 (clerk/table
  {:head ["scale kind" "domain" "range" "info"]
   :rows [[:linear "continuous, numerical" "continuous, numerical" "linear"]
-         [:log "continuous, numerical, positive values" "continuous, numerical" "logarithmic, base=10.0"]
-         [:symlog "continuous, numerical" "continuous, numerical" "logarithmic (symmetric), base=10.0"]
+         [:identity "continuous, numerical" "continuous, numerical, equal to domain" "the value itself"]
+         [:log "continuous, numerical, values of one sign" "continuous, numerical" "logarithmic"]
+         [:symlog "continuous, numerical" "continuous, numerical" "logarithmic (symmetric), C=1.0"]
          [:pow "continuous, numerical" "continuous, numerical" "power, exponent=0.5"]
+         [:radial "continuous, numerical" "continuous, numerical" "radius of an area linear in the domain"]
          [:interpolated "continuous, numerical, segmented" "continuous, numerical" "interpolated function, linear by default"]
+         [:sequential "continuous, numerical" "interpolator results" "normalised domain passed to an interpolator (gradient)"]
+         [:diverging "continuous, numerical, [low mid high]" "interpolator results" "normalised domain (mid at 0.5) passed to an interpolator"]
          [:quantize "continuous" "discrete, any or quantization data" "splits domain into evenly sized segments"]
          [:datetime "continuous, temporal" "continuous, numerical" "temporal"]
          [:histogram "data, numerical" "discrete, numerical or bin data" "splits data into bins"]
          [:quantile "data, numerical" "discrete, numerical or quantile data" "splits data into quantiles"]
          [:threshold "continuous, numerical" "discrete, any or segment data" "splits data into segments by given thresholds"]
          [:bands "discrete, any" "discrete, numerical or bin data" "assigns domain values into evenly sized segments"]
+         [:point "discrete, any" "continuous, numerical" "assigns domain values to evenly spaced points"]
          [:ordinal "discrete, any" "discrete, any" "maps domain and range values"]
          [:constant "any" "any" "returns constant value"]]})
 
@@ -318,6 +323,20 @@ s/mapping
 (s/scale? (s/scale :linear))
 (s/scale? nil)
 
+;; ### Clamp, unknown, round
+
+;; Scales with a continuous range accept three more attributes (as in d3): `:clamp` constrains input values to the domain (and inverse results too), `:unknown` is returned for `nil` and `NaN`, `:round` rounds results half up.
+
+(def unit-scale (s/scale :linear {:domain [0 10] :range [0 100]}))
+
+(clerk/example
+ (unit-scale 12.34)                                         ;; extrapolated
+ ((s/with-data unit-scale :clamp true) 12.34)               ;; clamped
+ (s/inverse (s/with-data unit-scale :clamp true) 150)       ;; inverse is clamped too
+ ((s/with-data unit-scale :round true) 1.234)               ;; rounded
+ (unit-scale nil)                                           ;; unknown, nil by default
+ ((s/with-data unit-scale :unknown -1) ##NaN))              ;; unknown value
+
 ;; ## Numerical scales (continuous -> continuous)
 
 ;; This group of scales transform continuous domain into continuous range of numbers.
@@ -325,10 +344,13 @@ s/mapping
 ;; We have here:
 
 ;; * linear
+;; * identity
 ;; * logarithmic
 ;; * symmetric log
-;; * exponential
+;; * power
+;; * radial
 ;; * interpolated
+;; * sequential and diverging
 
 (require '[wadogo.config :as cfg])
 
@@ -420,7 +442,7 @@ s/mapping
 
 ;; $$symlog_{C,b}(x)=sgn(x)\log_b\left( 1+\left| \frac{x}{C}\right| \right)$$
 
-;; Flatness parameter $C$ equals $\frac{1}{\ln(base)}$ by default or can be provided by user.
+;; Flatness parameter $C$ equals $1$ by default (as in d3). The base of the logarithm cancels after normalisation, so `:base` is deprecated and ignored.
 
 ;; $symlog$ function is later normalized to a domain and lineary tranformed to a desired range.
 
@@ -444,11 +466,11 @@ s/mapping
 
 ;; Ticks are the same as in linear scale.
 
-;; Changing base, changes the slope of the curve around `0.0`. We need to reset `:C` as well (if not, previous value will be used).
+;; Changing `:C` changes the slope of the curve around `0.0`: values much smaller than `C` are mapped almost linearly.
 
-(def symmetric-log-scale-base-2 (s/with-data symmetric-log-scale :base 2 :C nil))
+(def symmetric-log-scale-c (s/with-data symmetric-log-scale :C 0.1))
 
-(clerk/vl (cont->cont symmetric-log-scale-base-2))
+(clerk/vl (cont->cont symmetric-log-scale-c))
 
 ;; ### Power scale
 
@@ -478,6 +500,29 @@ s/mapping
 
 (clerk/vl (cont->cont power-2-scale))
 
+;; ### Identity scale
+
+;; Returns the value itself, the range is the domain. Ticks and `nice` work as for the linear scale.
+
+(def identity-scale (s/scale :identity {:domain [0.3 9.7]}))
+
+(clerk/example
+ (identity-scale 2.5)
+ (s/ticks identity-scale)
+ (s/range (s/nice identity-scale)))
+
+;; ### Radial scale
+
+;; Maps the domain linearly to squared range and returns the square root, so the range values are radii of circles with areas proportional to the domain values.
+
+(def radial-scale (s/scale :radial {:domain [0 100] :range [0 10]}))
+
+(clerk/vl (cont->cont radial-scale))
+
+(clerk/example
+ (radial-scale 25)
+ (s/inverse radial-scale 5))
+
 ;; ### Interpolated scale
 
 ;; This scale interpolates between points created from domain and range, ie. pairs $(d_i, r_i)$. `:interpolator` parameter defines the method of interpolation, `:interpolator-params` is a list of parameters for `interpolation` function. Please refer [fastmath.interpolation](https://generateme.github.io/fastmath/fastmath.interpolation.html#var-interpolators-1d-list) namespace for a list of functions and interpolation names.
@@ -502,11 +547,30 @@ s/mapping
 
 (clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :monotone)))
 (clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :shepard)))
-(clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :loess :interpolator-params [0.7 2])))
+(clerk/vl (cont->cont (s/with-data interpolated-scale :interpolator :loess :interpolator-params [{:bandwidth 0.7}])))
+
+;; ### Sequential and diverging scales
+
+;; Sequential scale normalises the domain to $[0,1]$ and passes the result to an `:interpolator` function (identity by default), usually a color gradient. Diverging scale does the same with a three-value domain `[low mid high]` mapped to $0$, $0.5$ and $1$. `:transform` changes the normalisation: `:linear` (default), `:log`, `:pow` (with `:exponent`) or `:symlog` (with `:C`).
+
+(def sequential-scale (s/scale :sequential {:domain [1 1000] :transform :log}))
+
+(clerk/vl (cont->cont sequential-scale))
+
+(def diverging-scale (s/scale :diverging {:domain [-3 0 9]}))
+
+(clerk/vl (cont->cont diverging-scale))
+
+(clerk/example
+ (sequential-scale 10)
+ (s/ticks sequential-scale)
+ (diverging-scale 4.5)
+ (s/inverse diverging-scale 0.25)
+ ((s/scale :sequential {:domain [0 10] :interpolator (fn [t] (str "color at " t))}) 5))
 
 ;; ## Datetime scale (continuous -> continuous)
 
-;; This is linear scale which domain is a temporal interval and range is numerical. [clojure.java-time](https://github.com/dm3/clojure.java-time) is used as a Java 8 datetime API. Any `java.time.temporal.Temporal` is supported.
+;; This is linear scale which domain is a temporal interval and range is numerical. [clojure.java-time](https://github.com/dm3/clojure.java-time) is used as a Java 8 datetime API. Supported types: `LocalDateTime`, `LocalDate`, `LocalTime`, `java.util.Date`, and `Instant`, `ZonedDateTime`, `OffsetDateTime`, which are converted to UTC `LocalDateTime`.
 
 (def datetime-scale (s/scale :datetime {:domain [(dt/zoned-date-time 2001 10 20 4)
                                                (dt/zoned-date-time 2010 10 20 5)]
@@ -628,7 +692,7 @@ s/mapping
 
 ;; ### Quantiles
 
-;; Divides data by quantiles (`:range`). `:estimation-strategy` can be either `:legacy` ([method description](https://commons.apache.org/proper/commons-math/javadocs/api-3.6/org/apache/commons/math3/stat/descriptive/rank/Percentile.html)) or one from `:r1` to `:r9` ([estimation strategies](https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample))
+;; Divides data by quantiles (`:range`). `:estimation-strategy` is one from `:r1` to `:r9` ([estimation strategies](https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample)), `:r7` by default (as d3 and R), or `:legacy` ([method description](https://commons.apache.org/proper/commons-math/javadocs/api-3.6/org/apache/commons/math3/stat/descriptive/rank/Percentile.html)). Values outside the data belong to the first or the last interval.
 
 (defn quantile-intervals
   "Create intervals from quantile scale data."
@@ -654,18 +718,18 @@ s/mapping
  (s/ticks quantile-scale 2)          ;; 2 ticks
  )          
 
-;; 10 quantiles with R7 strategy
+;; 10 quantiles with the legacy strategy
 
 (-> quantile-scale
     (s/with-range [0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9])
-    (s/with-data :estimation-strategy :r7)
+    (s/with-data :estimation-strategy :legacy)
     quantile-intervals)
 
 ;; ## Bands (discrete -> continuous)
 
 ;; Bands scale maps a discrete value from a domain to a numerical value within assigned interval from a range.
 
-;; Intervals (bands) are created by slicing a range and shrinking them with padding parameters. `padding-out` controls outer gaps, `padding-in` controls gaps between bands. `align` controls position of the representative point inside a band. Values should be from `0.0` (no padding, left alignment) to `1.0` (full padding, right alignment).
+;; Intervals (bands) are created by slicing a range and shrinking them with padding parameters. `padding-out` controls outer gaps, `padding-in` controls gaps between bands. `align` controls position of the representative point inside a band. Values should be from `0.0` (no padding, left alignment) to `1.0` (full padding, right alignment). `align-outer` distributes the outer gaps (d3 `align`, `0.5` by default), `round` rounds the layout to whole numbers. `inverse` returns the domain value of the band containing a number.
 
 ;; Align can be:
 
@@ -687,15 +751,28 @@ s/mapping
                (s/with-data bands-scale :name "align: :spread, padding: 0.1" :padding-out 0.1 :padding-in 0.1 :align :spread)
                (s/with-data bands-scale :name "align: [list], padding: 0.1" :padding-out 0.1 :padding-in 0.1 :align [0.2 0.8 0.5 0.1 0.9])]))
 
+;; ## Point (discrete -> continuous)
+
+;; Point scale is a bands scale with zero-width bands: domain values are mapped to evenly spaced points. `padding` sets the outer gaps as a proportion of the step, `align-outer` distributes them.
+
+(def point-scale (s/scale :point {:domain [:a :b :c :d] :range [0 100] :padding 0.5}))
+
+(clerk/example
+ (map point-scale [:a :b :c :d])
+ (s/data point-scale :step)
+ (s/inverse point-scale 40))
+
 ;; ## Ordinal (discrete -> discrete)
 
-;; Maps values from domain to a range. When types are mixed, don't forget to turn off sorting. By default domain will be sorted.
+;; Maps values from domain to a range. A shorter range is cycled. When types are mixed, don't forget to turn off sorting (an exception is thrown otherwise). By default domain will be sorted.
 
 (def ordinal-scale (s/scale :ordinal {:domain [:a :b "11" 0]
                                     :range [-3 :some-key [2 3] {:a -11}]
                                     :sort? false}))
 
 (map ordinal-scale [0 :a :b "11" :other-key])
+
+(map (s/scale :ordinal {:domain [:a :b :c :d :e] :range [:odd :even]}) [:a :b :c :d :e])
 
 (map (partial s/inverse ordinal-scale) [0 -3 :some-key [2 3] {:a -11}])
 

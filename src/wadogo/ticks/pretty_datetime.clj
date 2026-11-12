@@ -197,7 +197,7 @@
               ticks)))))))
 
 (defn default-min-n
-  "`min.n` default of R's `prettyDate()`: `n %/% 2`."
+  "Returns the default `min.n` of R's `prettyDate()` for `n` ticks: `n %/% 2`, the minimal number of intervals."
   ^long [^long n]
   (quot n 2))
 

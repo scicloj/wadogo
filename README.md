@@ -14,29 +14,39 @@ Scales for Clojure. Domain -> range transformations of various types. Derived fr
 
 ## Scale types
 
+18 kinds, `(s/kind-info kind)` returns the full description (attributes, defaults, edge cases) of each.
+
 ### continuous -> continuous
 
-* linear
-* logarthmic
-* symmetrical log ([read here](https://www.researchgate.net/profile/John_Webber4/publication/233967063_A_bi-symmetric_log_transformation_for_wide-range_data/links/0fcfd50d791c85082e000000.pdf))
-* exponential (pow)
-* interpolated
-* date/time
+* `:linear` - linear
+* `:identity` - the value itself
+* `:log` - logarithmic
+* `:symlog` - bi-symmetric logarithmic ([read here](https://www.researchgate.net/profile/John_Webber4/publication/233967063_A_bi-symmetric_log_transformation_for_wide-range_data/links/0fcfd50d791c85082e000000.pdf))
+* `:pow` - power
+* `:radial` - square root of a linear mapping to the squared range (areas)
+* `:interpolated` - piecewise interpolation through points
+* `:sequential` - domain normalised to `[0, 1]` and passed to an interpolator, e.g. a color gradient (linear, log, pow or symlog transform)
+* `:diverging` - domain `[low mid high]` normalised to `[0, 0.5, 1]` and passed to an interpolator (linear, log, pow or symlog transform)
+* `:datetime` - date/time
+
+Continuous ranges support `:clamp`, `:unknown` (value for `nil`/`NaN`) and `:round`.
 
 ### continuous -> discrete
 
-* threshold
-* quantize
-* quantiles
-* histogram
+* `:threshold`
+* `:quantize`
+* `:quantile`
+* `:histogram`
 
 ### discrete -> continuous
 
-* bands
+* `:bands`
+* `:point`
 
 ### discrete -> discrete
 
-* ordinal
+* `:ordinal`
+* `:constant`
 
 ## Ticks and formatting
 

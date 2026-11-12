@@ -1,4 +1,7 @@
 (ns wadogo.ticks.linear
+  "d3 style linear ticks (d3-array `ticks`, `tickIncrement`) and d3 `nice` bounds: steps of 1, 2 or 5 times a power of ten, chosen for an approximate number of ticks.
+
+  [[linear-ticks]] returns the ticks inside a domain, [[linear-nice-bounds]] the domain extended to multiples of the step. Used by `:default` ticks of continuous kinds and by log ticks for short domains."
   (:require [fastmath.core :as m]))
 
 (set! *unchecked-math* :warn-on-boxed)
@@ -8,8 +11,8 @@
 (def ^:const ^:private e5 (m/sqrt 10.0))
 (def ^:const ^:private e2 m/SQRT2)
 
-(defn step-mult
-  "Step multiplier"
+(defn- step-mult
+  "Multiplier (1, 2, 5 or 10) of a power of ten for the ratio `error` of the raw step to that power."
   ^double [^double error]
   (cond
     (>= error e10) 10.0
@@ -33,9 +36,18 @@
   (m/floor (+ x 0.5)))
 
 (defn linear-ticks
-  "Ticks inside `[start, end]` (any order), d3 style, for an approximate (possibly fractional) `count`.
+  "Returns d3 style ticks inside the interval from `start` to `end`.
 
-  Tick indices are rounded and checked against the domain (d3-array 3.2), so a domain end equal to a tick is kept."
+  Parameters:
+
+  - `start`, `end`: the domain ends, in any order (the ticks follow it).
+  - `count`: the approximate number of ticks, possibly fractional.
+
+  The step is 1, 2 or 5 times a power of ten, chosen so that the number of ticks is close to `count`; ticks are multiples of the step, computed as integer multiples (or divisions for steps below one) to avoid accumulated rounding. Tick indices are rounded and checked against the domain (d3-array 3.2), so a domain end equal to a tick is kept.
+
+  Returns a sequence of doubles: `[start]` for equal ends and a positive `count`, empty for a non-positive `count` or non-finite ends.
+
+  See also [[linear-nice-bounds]], `wadogo.ticks.pretty/pretty-ticks`."
   [^double start ^double end ^double count]
   (if (and (== start end) (pos? count))
     [start]
@@ -59,8 +71,16 @@
       (if reverse? (reverse res) res))))
 
 (defn linear-nice-bounds
-  "`[lo, up]` (`lo < up`) extended to multiples of the tick step for `count` ticks (d3 `nice`): `[lo' up' step]`.
-  `nil` when there is no valid step or the extended bounds are not finite."
+  "Returns the interval from `lo` to `up` extended to the nearest multiples of the tick step, one step of d3 `nice`.
+
+  Parameters:
+
+  - `lo`, `up`: the interval ends, `lo < up`.
+  - `count`: the approximate number of ticks, as in [[linear-ticks]].
+
+  Returns `[lo' up' step]`, where `step` is the tick increment of d3 (negative for steps below one: the inverse of the step, negated), which identifies the tick grid; `nil` when there is no valid step or the extended ends aren't finite. `wadogo.scale/nice` repeats it until the step doesn't change.
+
+  See also [[linear-ticks]]."
   [^double lo ^double up ^double count]
   (let [step (tick-increment lo up count)]
     (when-not (or (zero? step) (m/invalid-double? step))

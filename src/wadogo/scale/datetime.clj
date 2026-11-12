@@ -1,21 +1,37 @@
 (ns wadogo.scale.datetime
+  "`:datetime` kind: a datetime domain mapped linearly to a continuous numerical range (d3 `scaleUtc`).
+
+  Attributes:
+
+  - `:domain` (default: the year before the moment `wadogo.config` was loaded): two datetimes in any order, a map with `:start` and `:end`, or a longer sequence (reduced to its earliest and latest value). Accepted types: `LocalDateTime`, `LocalDate` (start of the day), `LocalTime` (today), `java.util.Date`, and `Instant`, `ZonedDateTime` and `OffsetDateTime` (converted to the UTC local datetime).
+  - `:range` (default `[0.0 1.0]`): as for the `:linear` kind.
+  - `:clamp`, `:unknown`, `:round`: as for the `:linear` kind.
+
+  The domain is stored as `LocalDateTime` values. Forward accepts the same types as the domain and is linear in the elapsed time (millisecond precision with the nanosecond fraction); the inverse returns a `LocalDateTime` rounded to the millisecond. The domain length in milliseconds (`BigDecimal`, negative for a reversed domain) is stored under `:millis` in [[data]].
+
+  Default ticks (`:ticks-method :default`, 10 ticks) are spaced by a whole number of the time unit nearest to the tick step, starting at the domain start truncated to that unit, strictly inside the domain (not aligned to calendar units); `:pretty` ticks (5 ticks) follow R's `pretty()` for date-times. Ticks of a reversed domain are reversed. `nice` extends the domain to whole time units (`:default`) or to the outer pretty ticks (`:pretty`)."
   (:require [fastmath.core :as m]
             [java-time :as dt]
 
-            [wadogo.common :refer [scale ->ScaleType strip-keys merge-params]]
-            [wadogo.utils :refer [datetime-diff-millis ->extent]]))
+            [wadogo.common :refer [scale continuous-scale strip-keys merge-params]]
+            [wadogo.utils :refer [datetime-diff-millis ->extent]])
+  (:import [java.time Instant ZonedDateTime OffsetDateTime ZoneOffset LocalDateTime]))
 
 (set! *unchecked-math* :warn-on-boxed)
 (m/use-primitive-operators)
 
 (def ^:private epoch (dt/local-date-time 1970 1 1 0 0 0 0))
 
-(defn- ld->ldt
-  "Convert local-date to local-date-time"
+(defn- ->ldt
+  "Datetime value as `LocalDateTime` (UTC for instants and zoned values)."
   [ld]
   (cond
+    (instance? LocalDateTime ld) ld
     (dt/local-date? ld) (dt/truncate-to (dt/local-date-time ld) :days)
     (dt/local-time? ld) (dt/local-date-time ld)
+    (instance? Instant ld) (LocalDateTime/ofInstant ^Instant ld ZoneOffset/UTC)
+    (instance? ZonedDateTime ld) (LocalDateTime/ofInstant (.toInstant ^ZonedDateTime ld) ZoneOffset/UTC)
+    (instance? OffsetDateTime ld) (LocalDateTime/ofInstant (.toInstant ^OffsetDateTime ld) ZoneOffset/UTC)
     (instance? java.util.Date ld) (->> (dt/instant ld)
                                        (dt/to-millis-from-epoch)
                                        (dt/millis)
@@ -23,15 +39,15 @@
     :else ld))
 
 (defn- datetime-forward
-  "Create function which returns offset from starting date for given temporal value."
+  "Function returning the range value of a datetime."
   [start ^BigDecimal total ^double rstart ^double rend]
   (fn ^double [tm]
-    (m/lerp rstart rend (-> (datetime-diff-millis start (ld->ldt tm))
+    (m/lerp rstart rend (-> (datetime-diff-millis start (->ldt tm))
                             (.divide total java.math.MathContext/DECIMAL128)
                             (.doubleValue)))))
 
 (defn- datetime-inverse
-  "Create function which returns date-time for given offset from start."
+  "Function returning the datetime of a range value."
   [start ^BigDecimal total ^double rstart ^double rend]
   (fn [^double t]
     (let [tt (m/norm t rstart rend)]
@@ -42,23 +58,24 @@
            (dt/plus start)))))
 
 (defn- ->dt-extent
+  "Domain ends as `LocalDateTime`: a map's `:start` and `:end`, a pair as given, or the earliest and latest value."
   [input]
-  (if (map? input)
-    ((juxt :start :end) input)
-    [(reduce dt/min input) (reduce dt/max input)]))
+  (let [input (if (map? input) ((juxt :start :end) input) (map ->ldt input))]
+    (if (== 2 (count input))
+      (mapv ->ldt input)
+      [(reduce dt/min input) (reduce dt/max input)])))
 
 (defmethod scale :datetime
   ([_] (scale :datetime {}))
   ([s params]
    (let [params (merge-params s params)
-         [dstart dend] (->dt-extent (:domain params))
+         [start end] (->dt-extent (:domain params))
          [rstart rend] (->extent (:range params))
-         start (ld->ldt dstart)
-         end (ld->ldt dend)
          total (datetime-diff-millis start end)]
-     (->ScaleType :datetime [start end] [rstart rend] (:ticks params) (:formatter params)
-                  (datetime-forward start total rstart rend)
-                  (datetime-inverse start total rstart rend)
-                  (assoc (strip-keys params) :millis total)))))
+     (continuous-scale :datetime [start end] [rstart rend] params
+                       (datetime-forward start total rstart rend)
+                       (datetime-inverse start total rstart rend)
+                       (assoc (strip-keys params) :millis total)
+                       ->ldt))))
 
 (m/unuse-primitive-operators)

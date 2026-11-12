@@ -22,7 +22,7 @@
 (def ^:private ^:const max-cell (/ Double/MAX_VALUE 1.25))
 
 (defn default-min-n
-  "`min.n` default of R's `pretty()`: `n %/% 3`."
+  "Returns the default `min.n` of R's `pretty()` for `n` ticks: `n %/% 3`, the minimal number of intervals."
   ^long [^long n]
   (quot n 3))
 

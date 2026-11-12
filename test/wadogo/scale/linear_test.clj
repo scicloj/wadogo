@@ -75,7 +75,8 @@
 
 (deftest invalid-doubles
   (let [l (s/scale :linear)]
-    (is (m/nan? (l ##NaN)))
+    (is (nil? (l ##NaN)) "NaN is unknown")
+    (is (m/nan? ((s/scale :linear {:unknown ##NaN}) ##NaN)))
     (is (= (l ##Inf) ##Inf))
     (is (= (l ##-Inf) ##-Inf))))
 
