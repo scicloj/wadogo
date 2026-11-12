@@ -77,7 +77,7 @@ my-scale
 ;; => #object[wadogo.common.ScaleType 0xae5f779 "linear: [-1 2] -> [-10 -20] {}"]
 
 (s/ticks my-scale)
-;; => (-1.0 -0.8 -0.6 -0.4 -0.2 -0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0)
+;; => (-1.0 -0.8 -0.6 -0.4 -0.2 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0)
 (s/format my-scale)
 ;; => ("-1.0" "-0.8" "-0.6" "-0.4" "-0.2" "0.0" "0.2" "0.4" "0.6" "0.8" "1.0" "1.2" "1.4" "1.6" "1.8" "2.0")
 
@@ -108,24 +108,26 @@ dt-scale
 (s/format dt-scale)
 ;; => ("May-06" "May-27" "Jun-17" "Jul-08" "Jul-29" "Aug-19" "Sep-09" "Sep-30" "Oct-21" "Nov-11" "Dec-02")
 
-(def data (repeatedly 1000 #(+ (rand) (rand) (rand))))
+(require '[fastmath.random :as r])
+(def rng (r/rng :mersenne 42))
+(def data (repeatedly 1000 #(+ (r/drandom rng) (r/drandom rng) (r/drandom rng))))
 
 (def q-scale (s/scale :quantile {:domain data}))
 q-scale
-;; => #object[wadogo.common.ScaleType 0x1b72a45c "quantile: [D@68405751 -> (0.25 0.5 0.75 1.0) {:estimation-strategy :legacy, :quantiles ([1.148770652600275 0.25] [1.4728260316971906 0.5] [1.8287836732494889 0.75])}"]
+;; => #object[wadogo.common.ScaleType 0x2f4c9046 "quantile: [D@6fd48fa4 -> (0.25 0.5 0.75 1.0) {:estimation-strategy :r7, :quantiles ([1.1538869949414403 0.25] [1.5008114068067213 0.5] [1.8579308527364842 0.75])}"]
 
 (map q-scale (clojure.core/range 0.0 3.0 0.25))
-;; => (nil 0.25 0.25 0.25 0.25 0.5 0.75 0.75 1.0 1.0 1.0 1.0)
+;; => (0.25 0.25 0.25 0.25 0.25 0.5 0.5 0.75 1.0 1.0 1.0 1.0)
 
 (q-scale 1.15 true)
-;; => {:dstart 1.8287836732494889, :dend 2.934651568076644, :value 1.0, :count 250, :quantile 1.0}
+;; => {:dstart 0.23234914744564605, :dend 1.1538869949414403, :value 0.25, :count 250, :quantile 0.25}
 (s/inverse q-scale 0.5)
-;; => {:dstart 1.148770652600275, :dend 1.4728260316971906, :value 0.5, :count 250, :quantile 0.5}
+;; => {:dstart 1.1538869949414403, :dend 1.5008114068067213, :value 0.5, :count 250, :quantile 0.5}
 ```
 
 ## License
 
-Copyright © 2021-2023 Scicloj / GenerateMe
+Copyright © 2021-2026 Scicloj / GenerateMe
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at
