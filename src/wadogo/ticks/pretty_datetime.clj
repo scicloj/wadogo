@@ -196,6 +196,74 @@
               new-ticks
               ticks)))))))
 
+(def calendar-units
+  "Units of calendar ticks (`:ticks-params {:unit u :step s}`)."
+  #{:seconds :minutes :hours :days :weeks :months :years})
+
+(defn validate-calendar-params
+  "Throws when `unit` isn't one of [[calendar-units]] or `step` isn't a positive integer."
+  [unit step]
+  (when-not (contains? calendar-units unit)
+    (throw (ex-info (str "`:unit` of calendar ticks should be one of " (vec (sort calendar-units)) ".") {:unit unit})))
+  (when-not (and (integer? step) (pos? (long step)))
+    (throw (ex-info "`:step` of calendar ticks should be a positive integer." {:step step}))))
+
+(def ^:const max-calendar-ticks
+  "Largest number of calendar ticks a domain may get (a small unit over a long domain is refused)."
+  10000)
+
+(def ^:private calendar-unit-seconds
+  "Approximate length of a calendar unit in seconds (months and years on average)."
+  {:seconds 1.0 :minutes MIN :hours HOUR :days DAY :weeks (* 7.0 DAY) :months MONTH :years YEAR})
+
+(defn calendar-tick-estimate
+  "Approximate number of calendar ticks every `step` `unit`s over `[lo, hi]` (any order), an upper bound within 2."
+  ^long [^LocalDateTime lo ^LocalDateTime hi unit step]
+  (validate-calendar-params unit step)
+  (+ 2 (long (m/floor (/ (m/abs (seconds-between lo hi)) (* (double (calendar-unit-seconds unit)) (double step)))))))
+
+(defn validate-calendar-span
+  "Throws when calendar ticks every `step` `unit`s over `[lo, hi]` would exceed [[max-calendar-ticks]]."
+  [lo hi unit step]
+  (let [n (calendar-tick-estimate lo hi unit step)]
+    (when (> n max-calendar-ticks)
+      (throw (ex-info (str "Calendar ticks every " step " " (name unit) " give about " n " ticks over the domain, more than "
+                           max-calendar-ticks "; use a larger :unit or :step.")
+                      {:unit unit :step step :ticks n :max max-calendar-ticks})))))
+
+(defn- calendar-step
+  "Step of `step` calendar `unit`s, anchored at the start of the next larger unit: seconds - the minute, minutes - the
+  hour, hours - the day, days - the day, weeks - Monday, months - the year, years - the decade (step <= 10) or the
+  century."
+  [unit ^long step]
+  (case unit
+    :seconds {:unit :seconds :amount step :start :mins}
+    :minutes {:unit :minutes :amount step :start :hours}
+    :hours {:unit :hours :amount step :start :days}
+    :days {:unit :days :amount step :start :days}
+    :weeks {:unit :days :amount (* 7 step) :start :weeks}
+    :months {:unit :months :amount step :start :years}
+    :years {:unit :years :amount step :start (if (<= step 10) :decades :centuries)}))
+
+(defn calendar-ticks
+  "Ticks every `step` calendar `unit`s (see [[calendar-units]]; anchored as `calendar-step` says) inside `[start, end]`
+  (any order, ticks follow the order). Throws for an invalid unit or step, or over [[max-calendar-ticks]] ticks."
+  [^LocalDateTime start ^LocalDateTime end unit step]
+  (validate-calendar-span start end unit step)
+  (let [reverse? (.isBefore end start)
+        [^LocalDateTime lo ^LocalDateTime hi] (if reverse? [end start] [start end])
+        res (filterv (fn [^LocalDateTime t] (not (or (.isBefore t lo) (.isAfter t hi))))
+                     (calc-steps (calendar-step unit (long step)) lo hi))]
+    (if reverse? (vec (rseq res)) res)))
+
+(defn calendar-nice-bounds
+  "Outer calendar ticks (every `step` `unit`s) covering `[lo, hi]` (`lo` not after `hi`): `[lo' hi' grid]`."
+  [^LocalDateTime lo ^LocalDateTime hi unit step]
+  (validate-calendar-span lo hi unit step)
+  (let [ticks (calc-steps (calendar-step unit (long step)) lo hi)
+        bounds [(first ticks) (peek ticks)]]
+    (conj bounds bounds)))
+
 (defn default-min-n
   "Returns the default `min.n` of R's `prettyDate()` for `n` ticks: `n %/% 2`, the minimal number of intervals."
   ^long [^long n]

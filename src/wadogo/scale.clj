@@ -78,7 +78,7 @@
   - `:ticks-method`: how ticks are chosen for continuous and datetime domains (ignored by other kinds):
       - `:default` (default): d3 style ticks, 10 ticks by default (log: one tick per power).
       - `:pretty`: R's `pretty()` ticks inside the domain (log: subdivisions of powers of the base or powers, the grid with the number of ticks closest to the requested one), 5 ticks by default.
-  - `:ticks-params`: parameters of `:pretty` ticks, a map with `:min-n`, the minimal number of intervals (default: `n/3` for numbers, `n/2` for datetime; not used by log scales).
+  - `:ticks-params`: parameters of `:pretty` ticks, a map with `:min-n`, the minimal number of intervals (default: `n/3` for numbers, `n/2` for datetime; not used by log scales). Datetime `:pretty` ticks also take calendar ticks: `:unit` (`:seconds`, `:minutes`, `:hours`, `:days`, `:weeks`, `:months`, `:years`) and `:step` (a positive integer, default 1) - a tick every `step` units, anchored at the start of the next larger unit (the minute, hour, day, day, Monday, year, decade - or century for steps over 10 years); `:unit` overrides the tick count and `:min-n`, and `nice` extends to the outer calendar ticks.
   - `:formatter`: a function converting a value to a string, used by [[format]] instead of the default formatter.
   - `:formatter-params`: parameters of the default number formatter (see `wadogo.format.numbers/formatter`) and of the range formatter (see `wadogo.format.ranges/range-formatter`).
 

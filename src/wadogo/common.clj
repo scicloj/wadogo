@@ -206,6 +206,23 @@
   [^ScaleType scale n default-min-n]
   (get-in (.data scale) [:ticks-params :min-n] (default-min-n n)))
 
+(defn- calendar-unit
+  "`:unit` of calendar ticks from `:ticks-params` (`:datetime` with `:pretty`), or `nil`."
+  [^ScaleType scale]
+  (get-in (.data scale) [:ticks-params :unit]))
+
+(defn- calendar-step-count
+  "`:step` (units per tick) of calendar ticks from `:ticks-params`, default 1."
+  [^ScaleType scale]
+  (get-in (.data scale) [:ticks-params :step] 1))
+
+(defn- check-no-calendar!
+  "Throw when a `:datetime` scale with `:ticks-method :default` has calendar `:ticks-params` (they need `:pretty`)."
+  [^ScaleType scale]
+  (when (calendar-unit scale)
+    (throw (ex-info "Calendar ticks (`:ticks-params` `:unit`) need `:ticks-method :pretty`."
+                    {:ticks-params (:ticks-params (.data scale))}))))
+
 (defmulti ^:no-doc ticks
   "Internal. Ticks of a scale, dispatched on the kind group (see `wadogo.scale/ticks`)."
   (fn [scale] (kind->dispatch scale)))
@@ -276,14 +293,17 @@
       (let [[start end] (.domain scale)]
         (case (ticks-method scale)
           :default (let [cnt (or t default-count)]
+                     (check-no-calendar! scale)
                      (if (pos? (double cnt))
                        (if (pos? (compare start end))
                          (reverse (tdatetime/datetime-ticks end start (.abs ^java.math.BigDecimal (:millis (.data scale))) cnt))
                          (tdatetime/datetime-ticks start end (:millis (.data scale)) cnt))
                        []))
-          :pretty (let [n (pretty-count t)]
-                    (tpdatetime/pretty-datetime-ticks start end n
-                                                      (pretty-min-n scale n tpdatetime/default-min-n))))))))
+          :pretty (if-let [unit (calendar-unit scale)]
+                    (tpdatetime/calendar-ticks start end unit (calendar-step-count scale))
+                    (let [n (pretty-count t)]
+                      (tpdatetime/pretty-datetime-ticks start end n
+                                                        (pretty-min-n scale n tpdatetime/default-min-n)))))))))
 
 ;; nice
 
@@ -323,10 +343,13 @@
   (let [t (.ticks scale)]
     (case (ticks-method scale)
       :default (let [cnt (or t default-count)]
+                 (check-no-calendar! scale)
                  (when (pos? (double cnt)) (datetime-unit-bounds lo hi cnt)))
-      :pretty (let [n (pretty-count t)]
-                (tpdatetime/pretty-datetime-nice-bounds lo hi n
-                                                        (pretty-min-n scale n tpdatetime/default-min-n))))))
+      :pretty (if-let [unit (calendar-unit scale)]
+                (tpdatetime/calendar-nice-bounds lo hi unit (calendar-step-count scale))
+                (let [n (pretty-count t)]
+                  (tpdatetime/pretty-datetime-nice-bounds lo hi n
+                                                          (pretty-min-n scale n tpdatetime/default-min-n)))))))
 
 (def ^:private discrete-dispatch #{:discrete :ordinal})
 (def ^:private ^:const nice-max-iterations 10)
